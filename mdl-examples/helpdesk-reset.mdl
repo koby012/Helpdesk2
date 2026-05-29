@@ -1,0 +1,40 @@
+-- ============================================================================
+-- HelpDesk + KnowledgeBase — Reset Script
+-- ============================================================================
+--
+-- Purpose : Remove all artifacts created by helpdesk-app.mdl,
+--           restoring the project to a clean Blank Web App state.
+--
+-- Usage   : ./mxcli.exe exec mdl-examples/helpdesk-reset.mdl -p Helpdesk2.mpr
+--
+-- Order matters:
+--   1. Navigation first (remove HD/KB page references before modules are dropped)
+--   2. Demo users (project-level, not removed with module)
+--   3. User roles (project-level, not removed with module)
+--   4. Security settings (project-level)
+--   5. Modules last (module roles go with them)
+-- ============================================================================
+
+-- 1. Reset navigation to Blank Web App default (before dropping modules)
+create or replace navigation Responsive
+  home page MyFirstModule.Home_Web
+  login page Administration.login
+  menu ();
+
+-- 2. Demo users added by helpdesk-app.mdl
+drop demo user 'demo_customer@helpdesk.test';
+drop demo user 'demo_agent@helpdesk.test';
+drop demo user 'demo_manager@helpdesk.test';
+
+-- 3. User roles added by helpdesk-app.mdl
+drop user role Customer;
+drop user role Agent;
+drop user role Manager;
+
+-- 4. Project-level security settings
+alter project security level off;
+alter project security demo users off;
+
+-- 5. Modules (module roles are removed automatically with the module)
+drop module HD;
+drop module KB;
