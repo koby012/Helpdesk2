@@ -33,3 +33,6 @@ mxcli.exe
 # Docker build output (binary artifacts, not source)
 .docker/build/
 .docker/.env
+
+# Playwright CLI session cache (screenshots, snapshots)
+.playwright-cli/

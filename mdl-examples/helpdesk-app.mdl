@@ -1064,8 +1064,8 @@ create or replace page KB.Article_Detail
     row rMain {
       column cMain (desktopwidth: 9) {
         dataview dvArticle (datasource: $Article) {
-          dynamictext txtTitle   (content: 'Article Title',   rendermode: H1)
-          dynamictext txtContent_ (content: 'Article Body Text')
+          dynamictext txtTitle    (content: '{1}', contentparams: [{1} = Title],   rendermode: H1)
+          dynamictext txtContent_ (content: '{1}', contentparams: [{1} = Content])
         }
       }
       column cSidebar (desktopwidth: 3) {
@@ -1247,7 +1247,7 @@ create or replace page HD.TicketSearch_Form
 
 -- Placeholder pages for workflow forms
 -- HD.Ticket_NewEdit: real edit form
--- Demonstrates: textbox, textarea, datepicker, combobox in a dataview
+-- Demonstrates: textbox, textarea, combobox (enumeration), datepicker in a dataview
 create or replace page HD.Ticket_NewEdit
 (
   title: 'New / Edit Ticket',
@@ -1262,12 +1262,9 @@ create or replace page HD.Ticket_NewEdit
         dataview dvTicketForm (datasource: $Ticket) {
           textbox    tbSubject     (label: 'Subject',      attribute: Subject)
           textarea   taDescription (label: 'Description',  attribute: Description)
-          -- TODO: combobox CE0463, dropdown CE0582/CE2421; use textbox as workaround
-          textbox    tbStatus      (label: 'Status',    attribute: Subject)
-          textbox    tbPriority    (label: 'Priority',  attribute: Subject)
-          -- TODO: datepicker causes CE2421 in split-exec; use textbox as workaround
-          -- SLADueAt is datetime; bind to string attr to avoid CE2421
-          textbox tbSLADueAt (label: 'SLA Due At', attribute: Subject)
+          combobox   cbStatus      (label: 'Status',       attribute: Status)
+          combobox   cbPriority    (label: 'Priority',     attribute: Priority)
+          datepicker dpSLADueAt    (label: 'SLA Due At',   attribute: SLADueAt)
           footer ftrButtons {
             actionbutton btnSave   (caption: 'Save',   action: save_changes close_page, buttonstyle: primary)
             actionbutton btnCancel (caption: 'Cancel', action: cancel_changes close_page)
