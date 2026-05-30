@@ -31,7 +31,12 @@
       "Bash(git push *)",
       "Bash(bash tests/*.sh)",
       "Bash(/c/Users/z004jcbp/AppData/Roaming/npm/playwright-cli *)",
-      "Bash(\"C:/Program Files/Mendix/11.6.6/modeler/mx\" check *)"
+      "Bash(\"C:/Program Files/Mendix/11.6.6/modeler/mx\" check *)",
+      "Bash(node -e \"const pw = require\\('@playwright/cli/node_modules/playwright-core'\\); console.log\\(pw.chromium ? 'has chromium' : 'no'\\);\")",
+      "Read(//c/Users/z004jcbp/AppData/Roaming/npm/node_modules/@playwright/cli/node_modules/.bin//**)",
+      "Bash(npx playwright *)",
+      "Bash(curl -s http://localhost:9323)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:9323)"
     ],
     "deny": [
       "Bash(rm -rf)"
