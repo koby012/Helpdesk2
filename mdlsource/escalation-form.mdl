@@ -1,0 +1,68 @@
+-- Implement EscalationStart_Form and wire Escalate button to Ticket_Detail
+
+-- 1. NPE for escalation reason input
+CREATE NON-PERSISTENT ENTITY HD."EscalationInput" (
+  "Reason": String
+);
+
+GRANT HD.AgentRole   ON HD."EscalationInput" (READ *, WRITE *);
+GRANT HD.ManagerRole ON HD."EscalationInput" (READ *, WRITE *);
+
+-- 2. Open the escalation form (creates NPE, shows popup)
+CREATE OR MODIFY MICROFLOW HD."ACT_Escalation_Open"
+  ($Ticket: HD.Ticket)
+BEGIN
+  $Input = CREATE HD.EscalationInput ();
+  SHOW PAGE HD.EscalationStart_Form ($Ticket = $Ticket, $Input = $Input);
+END;
+/
+
+GRANT EXECUTE ON MICROFLOW HD."ACT_Escalation_Open" TO HD.AgentRole, HD.ManagerRole;
+MOVE MICROFLOW HD."ACT_Escalation_Open" TO FOLDER 'Escalation';
+
+-- 3. Submit: call ACT_StartEscalation then close page
+CREATE OR MODIFY MICROFLOW HD."ACT_Escalation_Submit"
+  ($Ticket: HD.Ticket, $Input: HD.EscalationInput)
+BEGIN
+  CALL MICROFLOW HD.ACT_StartEscalation (Ticket = $Ticket, Reason = $Input/Reason);
+  CLOSE PAGE;
+END;
+/
+
+GRANT EXECUTE ON MICROFLOW HD."ACT_Escalation_Submit" TO HD.AgentRole, HD.ManagerRole;
+MOVE MICROFLOW HD."ACT_Escalation_Submit" TO FOLDER 'Escalation';
+
+-- 4. Replace placeholder EscalationStart_Form with real form
+CREATE OR REPLACE PAGE HD."EscalationStart_Form"
+(
+  title: 'Request Escalation',
+  layout: Atlas_Core.PopupLayout,
+  folder: 'Escalation',
+  params: { $Ticket: HD.Ticket, $Input: HD.EscalationInput }
+)
+{
+  dataview dvInput (datasource: $Input) {
+    textarea taReason (label: 'Reason', attribute: Reason)
+    footer ftrButtons {
+      actionbutton btnEscalate (
+        caption: 'Escalate',
+        action: microflow HD.ACT_Escalation_Submit (Ticket: $Ticket, Input: $currentObject),
+        buttonstyle: warning
+      )
+      actionbutton btnCancel (caption: 'Cancel', action: close_page)
+    }
+  }
+};
+
+GRANT VIEW ON PAGE HD."EscalationStart_Form" TO HD.AgentRole, HD.ManagerRole;
+
+-- 5. Add Escalate button to Ticket_Detail footer
+ALTER PAGE HD."Ticket_Detail" {
+  INSERT AFTER btnAssignAgent {
+    ACTIONBUTTON btnEscalate (
+      caption: 'Escalate',
+      action: microflow HD.ACT_Escalation_Open (Ticket: $currentObject),
+      buttonstyle: warning
+    )
+  }
+};

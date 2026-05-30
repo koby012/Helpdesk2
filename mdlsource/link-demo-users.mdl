@@ -1,0 +1,93 @@
+-- Link demo users to HD.Customer / HD.Agent entities
+-- Adds Account associations and AfterStartup microflow for demo data setup
+
+-- 1. Associate Customer and Agent to Administration.Account
+CREATE OR MODIFY ASSOCIATION HD."Customer_Account"
+  FROM HD.Customer TO Administration.Account
+  TYPE REFERENCE
+  OWNER DEFAULT;
+
+CREATE OR MODIFY ASSOCIATION HD."Agent_Account"
+  FROM HD.Agent TO Administration.Account
+  TYPE REFERENCE
+  OWNER DEFAULT;
+
+-- 2. AfterStartup: create demo Customer/Agent records and link to accounts
+CREATE OR MODIFY MICROFLOW HD."ACT_AfterStartup" ()
+RETURNS Boolean AS $Success
+BEGIN
+  -- demo_customer → HD.Customer
+  RETRIEVE $CustomerAccount FROM Administration.Account
+    WHERE [Name = 'demo_customer@helpdesk.test'] LIMIT 1;
+  IF $CustomerAccount != empty THEN
+    RETRIEVE $ExistingCustomer FROM HD.Customer
+      WHERE [HD.Customer_Account = $CustomerAccount] LIMIT 1;
+    IF $ExistingCustomer = empty THEN
+      $NewCustomer = CREATE HD.Customer (
+        Name    = 'Demo Customer',
+        Email   = 'demo_customer@helpdesk.test',
+        Company = 'Acme Corp',
+        HD.Customer_Account = $CustomerAccount
+      );
+      COMMIT $NewCustomer;
+    END IF;
+  END IF;
+
+  -- demo_agent → HD.Agent
+  RETRIEVE $AgentAccount FROM Administration.Account
+    WHERE [Name = 'demo_agent@helpdesk.test'] LIMIT 1;
+  IF $AgentAccount != empty THEN
+    RETRIEVE $ExistingAgent FROM HD.Agent
+      WHERE [HD.Agent_Account = $AgentAccount] LIMIT 1;
+    IF $ExistingAgent = empty THEN
+      $NewAgent = CREATE HD.Agent (
+        Name     = 'Demo Agent',
+        Email    = 'demo_agent@helpdesk.test',
+        IsActive = true,
+        HD.Agent_Account = $AgentAccount
+      );
+      COMMIT $NewAgent;
+    END IF;
+  END IF;
+
+  -- demo_manager → HD.Agent (managers can also be assigned to tickets)
+  RETRIEVE $ManagerAccount FROM Administration.Account
+    WHERE [Name = 'demo_manager@helpdesk.test'] LIMIT 1;
+  IF $ManagerAccount != empty THEN
+    RETRIEVE $ExistingManagerAgent FROM HD.Agent
+      WHERE [HD.Agent_Account = $ManagerAccount] LIMIT 1;
+    IF $ExistingManagerAgent = empty THEN
+      $NewManagerAgent = CREATE HD.Agent (
+        Name     = 'Demo Manager',
+        Email    = 'demo_manager@helpdesk.test',
+        IsActive = true,
+        HD.Agent_Account = $ManagerAccount
+      );
+      COMMIT $NewManagerAgent;
+    END IF;
+  END IF;
+
+  RETURN true;
+END;
+/
+
+-- 3. Update ACT_Ticket_New to auto-link current user's Customer record
+CREATE OR MODIFY MICROFLOW HD."ACT_Ticket_New" ()
+RETURNS HD.Ticket AS $Result
+BEGIN
+  $NewTicket = CREATE HD.Ticket (
+    Status   = HD.TicketStatus.Draft,
+    Priority = HD.TicketPriority.Normal
+  );
+  RETRIEVE $Customer FROM HD.Customer
+    WHERE [HD.Customer_Account = '[%CurrentUser%]'] LIMIT 1;
+  IF $Customer != empty THEN
+    CHANGE $NewTicket (HD.Ticket_Customer = $Customer);
+  END IF;
+  SHOW PAGE HD.Ticket_NewEdit ($Ticket = $NewTicket);
+  RETURN $NewTicket;
+END;
+/
+
+-- 4. Set AfterStartup microflow in project settings
+ALTER SETTINGS MODEL AfterStartupMicroflow = 'HD.ACT_AfterStartup';

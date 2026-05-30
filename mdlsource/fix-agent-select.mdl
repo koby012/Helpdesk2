@@ -1,0 +1,27 @@
+-- Agent_Select: each row has an Assign action button column
+CREATE OR REPLACE PAGE HD."Agent_Select"
+(
+  title: 'Select Agent',
+  layout: Atlas_Core.PopupLayout,
+  folder: 'Ticket',
+  params: { $Ticket: HD.Ticket }
+)
+{
+  DATAGRID dgAgents (
+    datasource: database from HD.Agent sort by Name asc,
+    PageSize: 15
+  ) {
+    column colName     (attribute: Name,     caption: 'Name')
+    column colEmail    (attribute: Email,     caption: 'Email')
+    column colIsActive (attribute: IsActive,  caption: 'Active', ColumnWidth: manual, Size: 80)
+    column colAssign   (caption: 'Assign', ShowContentAs: customContent, ColumnWidth: manual, Size: 80) {
+      ACTIONBUTTON btnAssign (
+        caption: 'Assign',
+        action: microflow HD.ACT_Ticket_AssignAndClose (Ticket: $Ticket, SelectedAgent: $currentObject),
+        buttonstyle: primary
+      )
+    }
+  }
+};
+
+GRANT VIEW ON PAGE HD."Agent_Select" TO HD.AgentRole, HD.ManagerRole;

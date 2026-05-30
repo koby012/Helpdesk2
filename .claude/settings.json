@@ -21,16 +21,17 @@
       "Bash(playwright-cli *)",
       "Bash(./mxcli.exe exec *)",
       "Bash(docker compose *)",
-      "Bash(\"./mxcli.exe\" -p Helpdesk2.mpr -c \"SHOW HELP\")",
-      "Bash(\"./mxcli.exe\" docker *)",
-      "Bash(\"./mxcli.exe\" check *)",
-      "Bash(\"./mxcli.exe\" -p Helpdesk2.mpr -c \"SHOW USER ROLES\")",
-      "Bash(\"./mxcli.exe\" -p Helpdesk2.mpr -c \"SHOW DEMO USERS\")",
-      "Bash(\"./mxcli.exe\" -p Helpdesk2.mpr -c \"DESCRIBE USER ROLE Administrator\")",
-      "Bash(\"./mxcli.exe\" -p Helpdesk2.mpr -c \"DESCRIBE USER ROLE User\")",
-      "Bash(\"./mxcli.exe\" -p Helpdesk2.mpr -c \"SHOW SECURITY MATRIX\")",
+      "Bash(docker exec *)",
+      "Bash(docker ps)",
+      "Bash(docker ps *)",
+      "Bash(docker logs *)",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(bash tests/*.sh)",
+      "Bash(/c/Users/z004jcbp/AppData/Roaming/npm/playwright-cli *)",
+      "Bash(\"C:/Program Files/Mendix/11.6.6/modeler/mx\" check *)"
     ],
     "deny": [
       "Bash(rm -rf)"

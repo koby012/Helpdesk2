@@ -199,6 +199,22 @@ create or modify non-persistent entity HD.TicketSearch (
   PriorityFilter: HD.TicketPriority
 );
 
+-- Non-persistent entity: escalation reason input form
+create or modify non-persistent entity HD.EscalationInput (
+  Reason: string
+);
+
+-- Link Customer/Agent to Mendix account for identity resolution
+create or modify association HD.Customer_Account
+  from HD.Customer to Administration.Account
+  type reference
+  owner default;
+
+create or modify association HD.Agent_Account
+  from HD.Agent to Administration.Account
+  type reference
+  owner default;
+
 -- Cross-module: ticket may link to a KB article (nullable)
 create or modify association HD.Ticket_KBArticle
   from HD.Ticket to KB.Article
@@ -309,6 +325,20 @@ begin
   );
   commit $Ticket;
   return true;
+end;
+/
+
+-- ACT_Ticket_AssignAndClose: popup wrapper — assigns ticket then closes Agent_Select popup
+-- Note: 'Agent' is a reserved MDL keyword; parameter named SelectedAgent instead.
+-- Note: microflow X() close_page chain is not supported in MDL button actions,
+--       so this wrapper calls ACT_Ticket_Assign and then CLOSE PAGE.
+create or modify microflow HD.ACT_Ticket_AssignAndClose
+  ($Ticket: HD.Ticket, $SelectedAgent: HD.Agent)
+  folder 'Ticket'
+begin
+  call microflow HD.ACT_Ticket_Assign (Ticket = $Ticket, Agent = $SelectedAgent);
+  close page;
+  return;
 end;
 /
 
@@ -856,6 +886,24 @@ begin
 end;
 /
 
+-- 1a. Open escalation form: create input NPE, show popup
+create or modify microflow HD.ACT_Escalation_Open
+  ($Ticket: HD.Ticket)
+begin
+  $Input = create HD.EscalationInput ();
+  show page HD.EscalationStart_Form ($Ticket = $Ticket, $Input = $Input);
+end;
+/
+
+-- 1b. Submit escalation: call workflow trigger, close popup
+create or modify microflow HD.ACT_Escalation_Submit
+  ($Ticket: HD.Ticket, $Input: HD.EscalationInput)
+begin
+  call microflow HD.ACT_StartEscalation (Ticket = $Ticket, Reason = $Input/Reason);
+  close page;
+end;
+/
+
 -- 2. Workflow create event handler (WFC_ prefix)
 create or modify microflow HD.WFC_EscalationRequest_OnCreate
   ($EscalationRequest: HD.EscalationRequest)
@@ -1083,18 +1131,79 @@ create or replace page KB.Article_Detail
 -- MARK: Pages — HelpDesk
 
 -- ACT_Ticket_New: create without commit, open edit page
--- Fixes: create_object commits immediately (empty tickets appear in DB before Save)
+-- Auto-links the current user's Customer record to the new ticket
 create or modify microflow HD.ACT_Ticket_New
   ()
-  returns HD.Ticket as $Ticket
+  returns HD.Ticket as $Result
   folder 'Ticket'
 begin
-  $Ticket = create HD.Ticket (
+  $NewTicket = create HD.Ticket (
     Status   = HD.TicketStatus.Draft,
     Priority = HD.TicketPriority.Normal
   );
-  show page HD.Ticket_NewEdit (Ticket: $Ticket);
-  return $Ticket;
+  retrieve $Customer from HD.Customer
+    where [HD.Customer_Account = '[%CurrentUser%]'] limit 1;
+  if $Customer != empty then
+    change $NewTicket (HD.Ticket_Customer = $Customer);
+  end if;
+  show page HD.Ticket_NewEdit (Ticket: $NewTicket);
+  return $NewTicket;
+end;
+/
+
+-- AfterStartup: create demo Customer/Agent records linked to demo accounts
+create or modify microflow HD.ACT_AfterStartup ()
+returns Boolean as $Success
+begin
+  retrieve $CustomerAccount from Administration.Account
+    where [Name = 'demo_customer@helpdesk.test'] limit 1;
+  if $CustomerAccount != empty then
+    retrieve $ExistingCustomer from HD.Customer
+      where [HD.Customer_Account = $CustomerAccount] limit 1;
+    if $ExistingCustomer = empty then
+      $NewCustomer = create HD.Customer (
+        Name    = 'Demo Customer',
+        Email   = 'demo_customer@helpdesk.test',
+        Company = 'Acme Corp',
+        HD.Customer_Account = $CustomerAccount
+      );
+      commit $NewCustomer;
+    end if;
+  end if;
+
+  retrieve $AgentAccount from Administration.Account
+    where [Name = 'demo_agent@helpdesk.test'] limit 1;
+  if $AgentAccount != empty then
+    retrieve $ExistingAgent from HD.Agent
+      where [HD.Agent_Account = $AgentAccount] limit 1;
+    if $ExistingAgent = empty then
+      $NewAgent = create HD.Agent (
+        Name     = 'Demo Agent',
+        Email    = 'demo_agent@helpdesk.test',
+        IsActive = true,
+        HD.Agent_Account = $AgentAccount
+      );
+      commit $NewAgent;
+    end if;
+  end if;
+
+  retrieve $ManagerAccount from Administration.Account
+    where [Name = 'demo_manager@helpdesk.test'] limit 1;
+  if $ManagerAccount != empty then
+    retrieve $ExistingManagerAgent from HD.Agent
+      where [HD.Agent_Account = $ManagerAccount] limit 1;
+    if $ExistingManagerAgent = empty then
+      $NewManagerAgent = create HD.Agent (
+        Name     = 'Demo Manager',
+        Email    = 'demo_manager@helpdesk.test',
+        IsActive = true,
+        HD.Agent_Account = $ManagerAccount
+      );
+      commit $NewManagerAgent;
+    end if;
+  end if;
+
+  return true;
 end;
 /
 
@@ -1145,6 +1254,11 @@ create or replace page HD.Ticket_Overview
 -- Agent selection popup: DataGrid (selection:single) + microflow close_page
 -- Pattern D: popup selection — lists HD.Agent, calls ACT_Ticket_Assign, closes popup
 -- Must be defined before HD.Ticket_Detail which references it via show_page.
+-- Agent_Select: each row has an Assign action column
+-- Note: microflow X() close_page chain is not supported in MDL button actions.
+--       Use ACT_Ticket_AssignAndClose (wraps ACT_Ticket_Assign + CLOSE PAGE).
+--       Note: 'Agent' is a reserved MDL keyword — parameter renamed to SelectedAgent.
+--       customContent column + $currentObject gives per-row agent context.
 create or replace page HD.Agent_Select
 (
   title: 'Select Agent',
@@ -1155,19 +1269,18 @@ create or replace page HD.Agent_Select
 {
   datagrid dgAgents (
     datasource: database from HD.Agent sort by Name asc,
-    PageSize: 15,
-    selection: single
+    PageSize: 15
   ) {
-    controlbar cb1 {
+    column colName     (attribute: Name,     caption: 'Name')
+    column colEmail    (attribute: Email,     caption: 'Email')
+    column colIsActive (attribute: IsActive,  caption: 'Active', ColumnWidth: manual, Size: 80)
+    column colAssign   (caption: 'Assign', ShowContentAs: customContent, ColumnWidth: manual, Size: 80) {
       actionbutton btnAssign (
         caption: 'Assign',
-        action: microflow HD.ACT_Ticket_Assign (Ticket: $Ticket, Agent: $currentObject) close_page,
+        action: microflow HD.ACT_Ticket_AssignAndClose (Ticket: $Ticket, SelectedAgent: $currentObject),
         buttonstyle: primary
       )
     }
-    column colName     (attribute: Name,     caption: 'Name')
-    column colEmail    (attribute: Email,    caption: 'Email')
-    column colIsActive (attribute: IsActive, caption: 'Active', ColumnWidth: manual, Size: 80)
   }
 };
 
@@ -1209,6 +1322,11 @@ create or replace page HD.Ticket_Detail
               caption: 'Assign Agent',
               action: show_page HD.Agent_Select (Ticket: $Ticket),
               buttonstyle: default
+            )
+            actionbutton btnEscalate (
+              caption: 'Escalate',
+              action: microflow HD.ACT_Escalation_Open (Ticket: $Ticket),
+              buttonstyle: warning
             )
           }
         }
@@ -1310,14 +1428,19 @@ create or replace page HD.EscalationStart_Form
 (
   title: 'Request Escalation',
   layout: Atlas_Core.PopupLayout,
-  folder: 'Escalation'
+  folder: 'Escalation',
+  params: { $Ticket: HD.Ticket, $Input: HD.EscalationInput }
 )
 {
-  layoutgrid lgMain {
-    row rMain {
-      column cMain (desktopwidth: 12) {
-        dynamictext txtPlaceholder (content: 'Escalation reason form.')
-      }
+  dataview dvInput (datasource: $Input) {
+    textarea taReason (label: 'Reason', attribute: Reason)
+    footer ftrButtons {
+      actionbutton btnEscalate (
+        caption: 'Escalate',
+        action: microflow HD.ACT_Escalation_Submit (Ticket: $Ticket, Input: $currentObject),
+        buttonstyle: warning
+      )
+      actionbutton btnCancel (caption: 'Cancel', action: close_page)
     }
   }
 };
@@ -1390,6 +1513,7 @@ grant HD.AgentRole on HD.Customer (read *);
 grant HD.AgentRole on HD.Agent (read *);
 grant HD.AgentRole on HD.EscalationRequest (create, read *);
 grant HD.AgentRole on HD.TicketSearch (read *, write *);
+grant HD.AgentRole on HD.EscalationInput (read *, write *);
 
 -- ManagerRole: AgentRole + approve escalations + delete tickets
 grant HD.ManagerRole on HD.Ticket (create, read *, write *, delete);
@@ -1398,16 +1522,20 @@ grant HD.ManagerRole on HD.Customer (read *, write *);
 grant HD.ManagerRole on HD.Agent (read *, write *);
 grant HD.ManagerRole on HD.EscalationRequest (create, read *, write *, delete);
 grant HD.ManagerRole on HD.TicketSearch (read *, write *);
+grant HD.ManagerRole on HD.EscalationInput (read *, write *);
 
 -- Microflow / nanoflow grants — HelpDesk
 grant execute on microflow HD.ACT_Ticket_New     to HD.CustomerRole, HD.AgentRole, HD.ManagerRole;
 grant execute on microflow HD.ACT_Ticket_Validate to HD.CustomerRole, HD.AgentRole, HD.ManagerRole;
 grant execute on microflow HD.ACT_Ticket_Submit  to HD.CustomerRole, HD.AgentRole, HD.ManagerRole;
-grant execute on microflow HD.ACT_Ticket_Assign  to HD.AgentRole, HD.ManagerRole;
+grant execute on microflow HD.ACT_Ticket_Assign         to HD.AgentRole, HD.ManagerRole;
+grant execute on microflow HD.ACT_Ticket_AssignAndClose to HD.AgentRole, HD.ManagerRole;
 grant execute on microflow HD.ACT_Ticket_Resolve to HD.AgentRole, HD.ManagerRole;
 grant execute on microflow HD.ACT_Ticket_Reopen  to HD.AgentRole, HD.ManagerRole;
 grant execute on microflow HD.ACT_Ticket_Close   to HD.AgentRole, HD.ManagerRole;
-grant execute on microflow HD.ACT_StartEscalation to HD.AgentRole, HD.ManagerRole;
+grant execute on microflow HD.ACT_StartEscalation   to HD.AgentRole, HD.ManagerRole;
+grant execute on microflow HD.ACT_Escalation_Open   to HD.AgentRole, HD.ManagerRole;
+grant execute on microflow HD.ACT_Escalation_Submit to HD.AgentRole, HD.ManagerRole;
 grant execute on microflow HD.ACT_Workflow_ChangeState  to HD.ManagerRole;
 grant execute on microflow HD.ACT_Workflow_Lock         to HD.ManagerRole;
 grant execute on microflow HD.ACT_Workflow_Unlock       to HD.ManagerRole;
@@ -1430,6 +1558,7 @@ grant view on page HD.TicketSearch_Form    to HD.CustomerRole, HD.AgentRole, HD.
 grant view on page HD.Agent_Select         to HD.AgentRole, HD.ManagerRole;
 grant view on page HD.Ticket_NewEdit       to HD.CustomerRole, HD.AgentRole, HD.ManagerRole;
 grant view on page KB.Article_NewEdit      to KB.Contributor, KB.Admin;
+grant view on page HD.EscalationStart_Form    to HD.AgentRole, HD.ManagerRole;
 grant view on page HD.EscalationReview_Form   to HD.ManagerRole;
 grant view on page HD.EscalationWorkflow_Overview to HD.ManagerRole;
 grant view on page KB.Article_Overview     to KB.Reader, KB.Contributor, KB.Admin;
@@ -1490,11 +1619,16 @@ move page      KB.Article_Overview             to folder 'Article';
 move page      KB.Article_Detail               to folder 'Article';
 move page      KB.Article_NewEdit              to folder 'Article';
 
+-- HD Module — Startup
+alter settings model AfterStartupMicroflow = 'HD.ACT_AfterStartup';
+move microflow HD.ACT_AfterStartup             to folder 'Startup';
+
 -- HD Module — Ticket
 move microflow HD.ACT_Ticket_New               to folder 'Ticket';
 move microflow HD.ACT_Ticket_Validate          to folder 'Ticket';
 move microflow HD.ACT_Ticket_Submit            to folder 'Ticket';
 move microflow HD.ACT_Ticket_Assign            to folder 'Ticket';
+move microflow HD.ACT_Ticket_AssignAndClose    to folder 'Ticket';
 move microflow HD.ACT_Ticket_Resolve           to folder 'Ticket';
 move microflow HD.ACT_Ticket_Reopen            to folder 'Ticket';
 move microflow HD.ACT_Ticket_Close             to folder 'Ticket';
@@ -1526,6 +1660,8 @@ move microflow HD.WFS_UpdateTicketPriority         to folder 'Escalation';
 move microflow HD.WFS_NotifyAgent                  to folder 'Escalation';
 move microflow HD.WFC_EscalationRequest_OnCreate   to folder 'Escalation';
 move microflow HD.ACT_StartEscalation              to folder 'Escalation';
+move microflow HD.ACT_Escalation_Open              to folder 'Escalation';
+move microflow HD.ACT_Escalation_Submit            to folder 'Escalation';
 move page      HD.EscalationReview_Form            to folder 'Escalation';
 move page      HD.EscalationWorkflow_Overview      to folder 'Escalation';
 move page      HD.EscalationStart_Form             to folder 'Escalation';
