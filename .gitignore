@@ -36,3 +36,7 @@ mxcli.exe
 
 # Playwright CLI session cache (screenshots, snapshots)
 .playwright-cli/
+
+# Playwright test reports (generated artifacts)
+tests/reports/
+*.webm
