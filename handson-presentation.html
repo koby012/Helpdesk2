@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mxcli ハンズオン — Mendix AI 開発の基礎</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #263348;
+  --accent: #f59e0b;
+  --accent2: #38bdf8;
+  --accent3: #34d399;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --code-bg: #0d1117;
+  --code-border: #30363d;
+  --green: #22c55e;
+  --red: #f87171;
+  --purple: #a78bfa;
+  --section-bg: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+body.lang-en .jp { display: none !important; }
+body.lang-jp .en { display: none !important; }
+
+/* ── Top bar ── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 44px;
+  background: rgba(15,23,42,0.95);
+  border-bottom: 1px solid #334155;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { color: var(--accent); font-weight: 600; }
+.section-label {
+  background: var(--surface2);
+  padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; color: var(--accent2);
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.slide-counter { font-size: 13px; }
+
+/* ── Language toggle ── */
+.lang-btn {
+  background: var(--surface2);
+  border: 1px solid #475569;
+  color: var(--text);
+  padding: 4px 14px; border-radius: 20px;
+  cursor: pointer; font-size: 12px;
+  transition: all 0.2s;
+}
+.lang-btn:hover { background: #334155; }
+
+/* ── Progress bar ── */
+.progress {
+  position: fixed; top: 44px; left: 0; right: 0; z-index: 99;
+  height: 3px; background: #1e293b;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+/* ── Slides ── */
+.slides { position: fixed; inset: 47px 0 60px 0; overflow: hidden; }
+.slide {
+  position: absolute; inset: 0;
+  padding: 40px 60px;
+  display: flex; flex-direction: column; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+  overflow-y: auto;
+}
+.slide.active { opacity: 1; pointer-events: all; }
+
+/* ── Slide types ── */
+.slide-title {
+  background: var(--section-bg);
+  align-items: center; text-align: center;
+}
+.slide-section {
+  background: linear-gradient(135deg, #1a3a2a 0%, #0f172a 100%);
+  align-items: center; text-align: center;
+}
+.slide-section.blue { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); }
+.slide-section.purple { background: linear-gradient(135deg, #2d1e5f 0%, #0f172a 100%); }
+.slide-section.orange { background: linear-gradient(135deg, #3d2000 0%, #0f172a 100%); }
+
+/* ── Typography ── */
+h1 { font-size: 2.6em; font-weight: 700; line-height: 1.2; }
+h2 { font-size: 1.9em; font-weight: 700; margin-bottom: 24px; color: var(--text); }
+h3 { font-size: 1.2em; font-weight: 600; color: var(--accent2); margin-bottom: 12px; }
+.subtitle { font-size: 1.1em; color: var(--text-muted); margin-top: 12px; }
+.tag {
+  display: inline-block;
+  background: var(--accent); color: #000;
+  font-size: 0.75em; font-weight: 700;
+  padding: 3px 10px; border-radius: 4px;
+  margin-bottom: 16px;
+}
+.tag.blue { background: var(--accent2); color: #000; }
+.tag.green { background: var(--accent3); color: #000; }
+.tag.purple { background: var(--purple); color: #000; }
+
+/* ── Layout helpers ── */
+.cols { display: grid; gap: 24px; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-60-40 { grid-template-columns: 3fr 2fr; }
+.cols-40-60 { grid-template-columns: 2fr 3fr; }
+.card {
+  background: var(--surface);
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 20px;
+}
+.card.accent-left { border-left: 3px solid var(--accent); }
+.card.accent-left.blue { border-left-color: var(--accent2); }
+.card.accent-left.green { border-left-color: var(--accent3); }
+.card.accent-left.purple { border-left-color: var(--purple); }
+
+/* ── Code ── */
+pre, code {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.82em;
+}
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+code {
+  background: #1e293b;
+  padding: 2px 6px; border-radius: 4px;
+  color: var(--accent2);
+  font-size: 0.88em;
+}
+.kw { color: #ff7b72; }   /* keyword */
+.cm { color: #8b949e; }   /* comment */
+.st { color: #a5d6ff; }   /* string */
+.fn { color: #d2a8ff; }   /* function */
+.nu { color: #79c0ff; }   /* number */
+.ty { color: #ffa657; }   /* type */
+.op { color: #c9d1d9; }   /* operator */
+.hl { background: rgba(245,158,11,0.15); display: inline-block; width: 100%; }
+
+/* ── Tables ── */
+table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+th {
+  background: var(--surface2);
+  padding: 10px 14px; text-align: left;
+  color: var(--accent); font-weight: 600;
+  border-bottom: 2px solid #334155;
+}
+td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #1e293b;
+  color: var(--text);
+}
+tr:hover td { background: rgba(255,255,255,0.03); }
+.check { color: var(--green); font-weight: 700; }
+.cross { color: var(--text-muted); }
+.warn { color: var(--accent); }
+
+/* ── Flow diagram ── */
+.flow {
+  display: flex; flex-direction: column; gap: 0;
+  max-width: 680px; margin: 0 auto;
+}
+.flow-item {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surface);
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 14px 20px;
+  position: relative;
+}
+.flow-item.highlight { border-color: var(--accent); }
+.flow-arrow {
+  text-align: center; font-size: 1.4em;
+  color: var(--text-muted); padding: 4px 0;
+}
+.flow-icon { font-size: 1.6em; min-width: 36px; }
+.flow-content { flex: 1; }
+.flow-label { font-weight: 600; font-size: 0.95em; }
+.flow-desc { font-size: 0.78em; color: var(--text-muted); margin-top: 2px; }
+.flow-tool { font-size: 0.72em; color: var(--accent2); margin-top: 4px; font-family: monospace; }
+
+/* ── Steps ── */
+.steps { display: flex; flex-direction: column; gap: 12px; }
+.step {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: var(--surface); border-radius: 8px;
+  padding: 14px 18px;
+  border: 1px solid #334155;
+}
+.step-num {
+  min-width: 28px; height: 28px;
+  background: var(--accent); color: #000;
+  border-radius: 50%; display: flex;
+  align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85em;
+}
+.step-body { flex: 1; }
+.step-title { font-weight: 600; margin-bottom: 4px; }
+.step-desc { font-size: 0.83em; color: var(--text-muted); }
+
+/* ── Pills / badges ── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 12px;
+  font-size: 0.73em; font-weight: 600;
+}
+.badge-amber { background: rgba(245,158,11,0.2); color: var(--accent); border: 1px solid rgba(245,158,11,0.4); }
+.badge-blue  { background: rgba(56,189,248,0.15); color: var(--accent2); border: 1px solid rgba(56,189,248,0.3); }
+.badge-green { background: rgba(52,211,153,0.15); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
+.badge-red   { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+/* ── Callout ── */
+.callout {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 8px; padding: 12px 16px;
+  font-size: 0.85em;
+  color: var(--accent);
+  margin-top: 12px;
+}
+.callout.blue { background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.4); color: var(--accent2); }
+.callout.green { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.4); color: var(--accent3); }
+
+/* ── Bottom nav ── */
+.bottomnav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 60px; background: rgba(15,23,42,0.97);
+  border-top: 1px solid #334155;
+  display: flex; align-items: center; justify-content: center; gap: 20px;
+  z-index: 100;
+}
+.nav-btn {
+  background: var(--surface);
+  border: 1px solid #475569;
+  color: var(--text); padding: 8px 28px;
+  border-radius: 6px; cursor: pointer; font-size: 14px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.nav-btn:hover { background: #334155; }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.nav-btn.primary:hover { background: #d97706; }
+.slide-dots {
+  display: flex; gap: 5px; align-items: center;
+  flex-wrap: wrap; max-width: 400px; justify-content: center;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #334155; cursor: pointer; transition: all 0.2s;
+}
+.dot.active { background: var(--accent); transform: scale(1.3); }
+.dot.section-dot { background: var(--accent2); opacity: 0.5; }
+.dot.section-dot.active { opacity: 1; }
+
+/* ── Folder tree ── */
+.tree { font-family: monospace; font-size: 0.82em; line-height: 2; color: var(--text-muted); }
+.tree .folder { color: var(--accent2); font-weight: 600; }
+.tree .file-primary { color: var(--accent); }
+.tree .file-note { color: var(--text-muted); font-size: 0.85em; }
+
+/* ── Section number ── */
+.section-number {
+  font-size: 5em; font-weight: 900; opacity: 0.08;
+  position: absolute; right: 60px; bottom: 40px;
+  font-family: monospace;
+}
+
+ul.list { list-style: none; }
+ul.list li {
+  padding: 6px 0 6px 20px;
+  position: relative;
+  font-size: 0.9em;
+  color: var(--text);
+  border-bottom: 1px solid #1e293b;
+}
+ul.list li::before {
+  content: '▶';
+  position: absolute; left: 0;
+  color: var(--accent); font-size: 0.7em;
+  top: 9px;
+}
+
+/* section header accent line */
+.section-line {
+  width: 60px; height: 4px;
+  background: var(--accent3);
+  border-radius: 2px;
+  margin: 20px auto;
+}
+
+/* time badge */
+.time-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.3);
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 0.8em; color: var(--accent);
+  margin-bottom: 16px;
+}
+
+/* ── Agenda table special ── */
+.agenda-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--surface);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #334155;
+  gap: 16px;
+}
+.agenda-row.highlight { border-color: var(--accent); }
+.agenda-time { font-size: 0.85em; color: var(--text-muted); font-family: monospace; }
+.agenda-title { font-weight: 600; }
+.agenda-sub { font-size: 0.78em; color: var(--text-muted); margin-top: 2px; }
+.agenda-dur { text-align: right; font-size: 0.8em; color: var(--accent); font-weight: 600; }
+
+</style>
+</head>
+<body class="lang-jp">
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title">mxcli Hands-on</span>
+    <span class="section-label" id="sectionLabel">Intro</span>
+  </div>
+  <div class="topbar-right">
+    <span class="slide-counter"><span id="curSlide">1</span> / <span id="totSlide">1</span></span>
+    <button class="lang-btn" onclick="toggleLang()">🌐 EN / JP</button>
+  </div>
+</div>
+
+<!-- Progress -->
+<div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Slides -->
+<div class="slides" id="slidesContainer">
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 1 — Title
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-title active" data-section="Intro">
+  <div style="max-width:700px;">
+    <div class="tag" style="margin-bottom:20px;">2 Hours Hands-on</div>
+    <h1>
+      <span class="jp">mxcli ハンズオン</span>
+      <span class="en">mxcli Hands-on</span>
+    </h1>
+    <div class="subtitle" style="font-size:1.3em; margin-top:16px;">
+      <span class="jp">Mendix AI 開発の基礎<br><span style="font-size:0.75em; color:#64748b;">仕様化 → 開発 → 実行 → テスト</span></span>
+      <span class="en">Foundations of AI-Driven Mendix Development<br><span style="font-size:0.75em; color:#64748b;">Spec → Build → Run → Test</span></span>
+    </div>
+    <div style="margin-top:36px; display:flex; gap:16px; flex-wrap:wrap;">
+      <div class="badge badge-amber">Helpdesk2</div>
+      <div class="badge badge-blue">Mendix 11.6</div>
+      <div class="badge badge-green">Docker + Playwright</div>
+      <div class="badge badge-red" style="background:rgba(167,139,250,0.15);color:#a78bfa;border-color:#a78bfa55;">MDL / mxcli</div>
+    </div>
+  </div>
+  <div class="section-number">01</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 2 — Agenda
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Intro">
+  <h2><span class="jp">本日のアジェンダ</span><span class="en">Agenda</span></h2>
+
+  <div class="agenda-row" style="border-color:var(--accent2);">
+    <div class="agenda-time">0:00</div>
+    <div>
+      <div class="agenda-title"><span class="jp">Part 1 — mxcli 解説</span><span class="en">Part 1 — mxcli Deep Dive</span></div>
+      <div class="agenda-sub"><span class="jp">大枠 / 仕様化 / 開発 / 実行 / テスト</span><span class="en">Overview / Spec / Build / Run / Test</span></div>
+    </div>
+    <div class="agenda-dur">70 min</div>
+  </div>
+
+  <div class="agenda-row" style="border-color:var(--accent);">
+    <div class="agenda-time">1:10</div>
+    <div>
+      <div class="agenda-title"><span class="jp">Part 2 — 演習1: アプリを作る</span><span class="en">Part 2 — Lab 1: Build the App</span></div>
+      <div class="agenda-sub"><span class="jp">helpdesk-app.mdl を流してゼロから構築</span><span class="en">Apply helpdesk-app.mdl from scratch</span></div>
+    </div>
+    <div class="agenda-dur">20 min</div>
+  </div>
+
+  <div class="agenda-row" style="border-color:var(--accent3);">
+    <div class="agenda-time">1:30</div>
+    <div>
+      <div class="agenda-title"><span class="jp">Part 3 — 演習2: 機能を追加する</span><span class="en">Part 3 — Lab 2: Extend the App</span></div>
+      <div class="agenda-sub"><span class="jp">カテゴリ追加 + Playwright テスト</span><span class="en">Add Category field + Playwright test</span></div>
+    </div>
+    <div class="agenda-dur">25 min</div>
+  </div>
+
+  <div class="agenda-row">
+    <div class="agenda-time">1:55</div>
+    <div>
+      <div class="agenda-title"><span class="jp">Part 4 — まとめ・Q&A</span><span class="en">Part 4 — Wrap-up & Q&A</span></div>
+      <div class="agenda-sub"><span class="jp">4ステップ振り返り</span><span class="en">Review the 4-step cycle</span></div>
+    </div>
+    <div class="agenda-dur">5 min</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 3 — Section: Part 1
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section blue" data-section="Part 1">
+  <div class="tag blue">Part 1</div>
+  <h1 style="font-size:2.2em;">
+    <span class="jp">mxcli 解説</span>
+    <span class="en">mxcli Deep Dive</span>
+  </h1>
+  <div class="section-line"></div>
+  <div class="subtitle">
+    <span class="jp">大枠から理解して、コマンドを使いこなす</span>
+    <span class="en">Understand the big picture, then master the commands</span>
+  </div>
+  <div class="section-number">P1</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 4 — 4ステップのサイクル
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 大枠">
+  <h2><span class="jp">mxcli が実現する開発サイクル</span><span class="en">The Development Cycle with mxcli</span></h2>
+  <div class="flow">
+    <div class="flow-item">
+      <div class="flow-icon">📄</div>
+      <div class="flow-content">
+        <div class="flow-label"><span class="jp">仕様化 — 他システムの仕様を Mendix に変換</span><span class="en">Spec — Convert legacy specs to Mendix design</span></div>
+        <div class="flow-desc"><span class="jp">Oracle Forms / OutSystems / K2 / Excel / Figma</span><span class="en">Oracle Forms / OutSystems / K2 / Excel / Figma</span></div>
+        <div class="flow-tool">AI → migration-design-package → 01-enriched → MDL</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-item highlight">
+      <div class="flow-icon">⌨️</div>
+      <div class="flow-content">
+        <div class="flow-label"><span class="jp">開発 — MDL スクリプトで機能を実装</span><span class="en">Build — Implement features with MDL scripts</span></div>
+        <div class="flow-desc"><span class="jp">DESCRIBE → 書く → check → exec</span><span class="en">DESCRIBE → Write → check → exec</span></div>
+        <div class="flow-tool">./mxcli check script.mdl --references &nbsp;&nbsp; ./mxcli exec script.mdl</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-item highlight">
+      <div class="flow-icon">🐳</div>
+      <div class="flow-content">
+        <div class="flow-label"><span class="jp">実行 — Docker で1コマンド起動</span><span class="en">Run — Launch with a single Docker command</span></div>
+        <div class="flow-desc"><span class="jp">Mendix + PostgreSQL が自動セットアップ</span><span class="en">Mendix + PostgreSQL auto-configured</span></div>
+        <div class="flow-tool">./mxcli docker run -p Helpdesk2.mpr</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-item highlight">
+      <div class="flow-icon">🧪</div>
+      <div class="flow-content">
+        <div class="flow-label"><span class="jp">テスト — UI 検証 + DB 確認</span><span class="en">Test — UI verification + DB assertion</span></div>
+        <div class="flow-desc"><span class="jp">Playwright でブラウザ操作 → OQL でDB照合</span><span class="en">Playwright browser ops → OQL DB check</span></div>
+        <div class="flow-tool">./mxcli playwright verify test.sh &nbsp;&nbsp; ./mxcli oql "SELECT ..."</div>
+      </div>
+    </div>
+  </div>
+  <div class="callout blue" style="margin-top:16px; text-align:center;">
+    <span class="jp">今日のハンズオンは 開発 → 実行 → テスト を体験する。仕様化は概要説明のみ。</span>
+    <span class="en">Today's labs cover Build → Run → Test. Spec phase is overview only.</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 5 — .mpr の正体
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 大枠">
+  <h2><span class="jp">.mpr ファイルの正体と mxcli の役割</span><span class="en">What is .mpr — and what does mxcli do?</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div>
+      <div class="card accent-left">
+        <h3><span class="jp">.mpr = SQLite データベース</span><span class="en">.mpr = SQLite Database</span></h3>
+        <p style="font-size:0.85em; color:var(--text-muted); line-height:1.7;">
+          <span class="jp">Mendix のプロジェクトファイルは中身が SQLite DB。<br>エンティティ・マイクロフロー・ページ・セキュリティ設定がすべてテーブルに格納されている。<br>Studio Pro はその GUI エディタに過ぎない。</span>
+          <span class="en">A Mendix project file is a SQLite database.<br>Entities, microflows, pages, and security rules are all stored as table rows.<br>Studio Pro is just a GUI editor on top of it.</span>
+        </p>
+      </div>
+      <div class="card accent-left blue" style="margin-top:14px;">
+        <h3>MDL — Mendix Definition Language</h3>
+        <p style="font-size:0.85em; color:var(--text-muted); line-height:1.7;">
+          <span class="jp">mxcli が解釈する SQL ライクな DSL。<br>Mendix のすべての要素を宣言的に記述できる。</span>
+          <span class="en">A SQL-like DSL interpreted by mxcli.<br>Describe any Mendix element declaratively.</span>
+        </p>
+        <pre style="margin-top:10px; font-size:0.8em;"><span class="kw">CREATE</span> ENTITY → <span class="kw">ALTER</span> PAGE → <span class="kw">GRANT</span> EXECUTE</pre>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="height:100%;">
+        <h3><span class="jp">mxcli の3役</span><span class="en">mxcli in 3 Roles</span></h3>
+        <div class="steps" style="margin-top:8px;">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title"><span class="jp">CLI — 1コマンド実行</span><span class="en">CLI — Single command</span></div>
+              <pre style="margin-top:6px;">./mxcli -p App.mpr -c <span class="st">"SHOW MODULES"</span></pre>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title"><span class="jp">スクリプト実行</span><span class="en">Script execution</span></div>
+              <pre style="margin-top:6px;">./mxcli exec script.mdl -p App.mpr</pre>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title"><span class="jp">AI エージェント連携</span><span class="en">AI Agent integration</span></div>
+              <div class="step-desc"><span class="jp">Claude が直接 .mpr を読み書きする</span><span class="en">Claude reads and writes .mpr directly</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 6 — Studio Pro との役割分担
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 大枠">
+  <h2><span class="jp">Studio Pro との役割分担</span><span class="en">Studio Pro vs mxcli</span></h2>
+  <table>
+    <thead>
+      <tr>
+        <th><span class="jp">用途</span><span class="en">Task</span></th>
+        <th>Studio Pro</th>
+        <th>mxcli</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="jp">GUI で視覚的に確認・デバッグ</span><span class="en">Visual debugging / inspection</span></td><td class="check">◎</td><td class="cross">△</td></tr>
+      <tr><td><span class="jp">既存ロジックの素早い読み取り</span><span class="en">Quickly read existing logic</span></td><td class="cross">△ <span style="font-size:0.8em;color:#64748b;"><span class="jp">画面遷移が多い</span><span class="en">many clicks</span></span></td><td class="check">◎ <span style="font-size:0.8em;color:#64748b;">DESCRIBE 1発</span></td></tr>
+      <tr><td><span class="jp">一括変更・スクリプト化</span><span class="en">Bulk changes / scripted edits</span></td><td class="cross">×</td><td class="check">◎</td></tr>
+      <tr><td><span class="jp">AI エージェントとの連携</span><span class="en">AI agent integration</span></td><td class="cross">×</td><td class="check">◎</td></tr>
+      <tr><td><span class="jp">Docker ビルド → 起動</span><span class="en">Docker build &amp; run</span></td><td class="cross">×</td><td class="check">◎</td></tr>
+      <tr><td><span class="jp">UI テスト・DB 検証</span><span class="en">UI tests &amp; DB assertion</span></td><td class="cross">×</td><td class="check">◎</td></tr>
+    </tbody>
+  </table>
+  <div class="callout" style="margin-top:20px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red);">
+    <span class="jp">⚠️ Studio Pro でプロジェクトを開いている間は mxcli で編集しないこと。<br>Studio Pro はメモリキャッシュを持ち、外部からの変更を認識できない。<br>最悪 .mpr が破損する。<br><strong>手順: Studio Pro でプロジェクトを閉じる → mxcli 実行 → Studio Pro で再度開く</strong></span>
+    <span class="en">⚠️ Do NOT edit with mxcli while the project is open in Studio Pro.<br>Studio Pro holds in-memory caches that cannot be updated externally — concurrent edits can corrupt the .mpr file.<br><strong>Workflow: Close project in Studio Pro → run mxcli → re-open in Studio Pro</strong></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 7 — 3つの実行モード
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 大枠">
+  <h2><span class="jp">3つの実行モードと check → exec の鉄則</span><span class="en">3 Execution Modes + The check → exec Rule</span></h2>
+  <div class="cols cols-2">
+    <div class="steps">
+      <div class="step">
+        <div class="step-num" style="background:var(--accent2); color:#000;">1</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">1コマンド実行（探索・確認）</span><span class="en">Single command (explore & confirm)</span></div>
+          <pre style="margin-top:8px;">./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW MODULES"</span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--accent2); color:#000;">2</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">スクリプトファイル実行（まとめて変更）</span><span class="en">Script file (batch changes)</span></div>
+          <pre style="margin-top:8px;">./mxcli exec script.mdl -p Helpdesk2.mpr</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:var(--accent2); color:#000;">3</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">check（書き込まない・検証のみ）</span><span class="en">check (dry-run, no write)</span></div>
+          <pre style="margin-top:8px;">./mxcli check script.mdl -p Helpdesk2.mpr <span class="kw">--references</span></pre>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="text-align:center; padding:28px;">
+        <div style="font-size:0.9em; color:var(--text-muted); margin-bottom:16px;">
+          <span class="jp">実行前の必須フロー</span>
+          <span class="en">Mandatory pre-execution flow</span>
+        </div>
+        <div style="font-size:1.05em; font-family:monospace; line-height:2.4;">
+          <div style="background:var(--surface2); padding:8px 16px; border-radius:6px; margin-bottom:4px;">
+            ① <span style="color:var(--accent2);">check</span> script.mdl
+            <div style="font-size:0.72em; color:var(--text-muted);"><span class="jp">構文チェック（軽い）</span><span class="en">syntax only (fast)</span></div>
+          </div>
+          <div style="color:var(--text-muted);">↓</div>
+          <div style="background:var(--surface2); padding:8px 16px; border-radius:6px; margin-bottom:4px;">
+            ② <span style="color:var(--accent2);">check</span> <span style="color:var(--accent);">--references</span>
+            <div style="font-size:0.72em; color:var(--text-muted);"><span class="jp">参照先の存在も確認（確実）</span><span class="en">also validates references</span></div>
+          </div>
+          <div style="color:var(--text-muted);">↓</div>
+          <div style="background:rgba(245,158,11,0.15); padding:8px 16px; border-radius:6px; border:1px solid rgba(245,158,11,0.4);">
+            ③ <span style="color:var(--accent);">exec</span> script.mdl
+            <div style="font-size:0.72em; color:var(--text-muted);"><span class="jp">実際に .mpr に書き込む</span><span class="en">writes to .mpr</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 8 — Section: 仕様化
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section" data-section="Part 1 — 仕様化">
+  <div class="tag green">Part 1 — ①</div>
+  <h1 style="font-size:2.2em;">
+    <span class="jp">仕様化</span>
+    <span class="en">Spec Phase</span>
+  </h1>
+  <div class="section-line"></div>
+  <div class="subtitle">
+    <span class="jp">他システムの仕様を Mendix に変換する</span>
+    <span class="en">Converting legacy system specs into Mendix design</span>
+  </div>
+  <div style="margin-top:20px; font-size:0.85em; color:var(--text-muted);">
+    <span class="jp">※ 今日のハンズオンではここは扱いません。概要のみ紹介します。</span>
+    <span class="en">※ Not covered in today's labs — overview only.</span>
+  </div>
+  <div class="section-number">①</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 9 — 移行の流れ
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 仕様化">
+  <h2><span class="jp">他システム → Mendix 移行の流れ</span><span class="en">Migration Flow: Legacy → Mendix</span></h2>
+  <div class="cols cols-2" style="gap:20px; align-items:start;">
+    <div>
+      <div class="flow">
+        <div class="flow-item">
+          <div class="flow-icon">📦</div>
+          <div class="flow-content">
+            <div class="flow-label"><span class="jp">生ソース・ドキュメント</span><span class="en">Raw source & documents</span></div>
+            <div class="flow-desc">OS / Oracle Forms / K2 / Excel / Figma</div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓ <span style="font-size:0.7em;color:var(--text-muted);"><span class="jp">AI が差異分析・Mendix へのリフレーミング</span><span class="en">AI: delta analysis + Mendix reframing</span></span></div>
+        <div class="flow-item">
+          <div class="flow-icon">📝</div>
+          <div class="flow-content">
+            <div class="flow-label">02-patched</div>
+            <div class="flow-desc"><span class="jp">差分注記ドキュメント → チームでレビュー・確定</span><span class="en">Annotated diff docs → team review & sign-off</span></div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-item highlight">
+          <div class="flow-icon">✅</div>
+          <div class="flow-content">
+            <div class="flow-label">01-enriched</div>
+            <div class="flow-desc"><span class="jp">MDL 生成ソース（developer-ready）</span><span class="en">MDL source (developer-ready, self-contained)</span></div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓ <span style="font-size:0.7em;color:var(--text-muted);">Claude → MDL script</span></div>
+        <div class="flow-item highlight">
+          <div class="flow-icon">🚀</div>
+          <div class="flow-content">
+            <div class="flow-label"><span class="jp">check → exec → 動く Mendix アプリ</span><span class="en">check → exec → Running Mendix App</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card accent-left green">
+        <h3><span class="jp">最小インプットセット</span><span class="en">Minimum Input Set</span></h3>
+        <div class="steps" style="margin-top:10px;">
+          <div class="step">
+            <div class="step-num" style="background:var(--accent3);color:#000;">1</div>
+            <div class="step-body">
+              <div class="step-title">DB Schema DDL / ER <span class="jp">図</span><span class="en">Diagram</span></div>
+              <div class="step-desc">→ <span class="jp">エンティティ・アソシエーション</span><span class="en">Entities & Associations</span></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--accent3);color:#000;">2</div>
+            <div class="step-body">
+              <div class="step-title"><span class="jp">業務フロー図 / 主要機能説明</span><span class="en">Process flow / Feature description</span></div>
+              <div class="step-desc">→ <span class="jp">マイクロフロー</span><span class="en">Microflows</span></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--accent3);color:#000;">3</div>
+            <div class="step-body">
+              <div class="step-title"><span class="jp">代表画面のスクリーンショット</span><span class="en">Key screen screenshots</span></div>
+              <div class="step-desc">→ <span class="jp">ページ構成</span><span class="en">Page layout</span></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num" style="background:var(--accent3);color:#000;">4</div>
+            <div class="step-body">
+              <div class="step-title"><span class="jp">ロール × 権限マトリクス</span><span class="en">Role × Permission matrix</span></div>
+              <div class="step-desc">→ <span class="jp">セキュリティ</span><span class="en">Security (GRANT)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 10 — migration-design-package 実例
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 仕様化">
+  <h2><span class="jp">実例: PayerBilling M-0022 移行設計パッケージ</span><span class="en">Real Example: PayerBilling M-0022 Design Package</span></h2>
+  <div class="cols cols-60-40" style="gap:20px; align-items:start;">
+    <div>
+      <div class="tree" style="background:var(--code-bg); padding:20px; border-radius:10px; border:1px solid var(--code-border);">
+        <div><span class="folder">migration-design-package/</span></div>
+        <div>&nbsp;├── <span class="file-primary">01-enriched/</span> &nbsp;<span style="color:var(--text-muted); font-size:0.85em;">← <span class="jp">MDL 生成の直接ソース</span><span class="en">Direct MDL source</span></span></div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp; └── F001〜F012-*.md &nbsp;<span style="color:var(--accent); font-size:0.8em;">★ Primary</span></div>
+        <div>&nbsp;├── 02-patched/ &nbsp;<span style="color:var(--text-muted); font-size:0.85em;"><span class="jp">差分注記</span><span class="en">diff annotations</span></span></div>
+        <div>&nbsp;├── <span class="folder">03-reference/</span></div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp; ├── arch-overview.md</div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp; ├── delta-code-vs-requirements.md &nbsp;<span style="color:var(--red); font-size:0.8em;">65 <span class="jp">件の差異</span><span class="en">findings</span></span></div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp; ├── open-topics.md</div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp; └── knowledge-base/</div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├── KB_RequirementsSpec_V5.md</div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ├── KB_QA.md &nbsp;KB_UserManual.md</div>
+        <div>&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └── brd/ F001〜F012.brd.json</div>
+        <div>&nbsp;└── 04-originals/ &nbsp;<span style="color:var(--text-muted); font-size:0.85em;"><span class="jp">修正前の元設計書</span><span class="en">baseline docs</span></span></div>
+      </div>
+    </div>
+    <div>
+      <div class="card accent-left">
+        <h3><span class="jp">01-enriched の構成</span><span class="en">01-enriched Structure</span></h3>
+        <p style="font-size:0.8em; color:var(--text-muted); margin-bottom:10px;">
+          <span class="jp">各ドキュメント 10 セクション → MDL に対応</span>
+          <span class="en">Each doc has 10 sections mapping to MDL</span>
+        </p>
+        <table style="font-size:0.78em;">
+          <tr><td style="color:var(--accent2);">Entity Model</td><td>→ CREATE ENTITY</td></tr>
+          <tr><td style="color:var(--accent2);">Business Rules</td><td>→ MICROFLOW VAL_*</td></tr>
+          <tr><td style="color:var(--accent2);">Microflow Inventory</td><td>→ MICROFLOW ACT_*</td></tr>
+          <tr><td style="color:var(--accent2);">Permission Matrix</td><td>→ GRANT</td></tr>
+          <tr><td style="color:var(--accent2);">UI Screens</td><td>→ CREATE PAGE</td></tr>
+          <tr><td style="color:var(--accent2);">Integration Points</td><td>→ DATABASE CONNECTION</td></tr>
+        </table>
+      </div>
+      <div class="callout" style="margin-top:12px; font-size:0.8em;">
+        <span class="jp">💡 生ドキュメントを直接 MDL 変換しない。<br>このプロジェクトでは 65件の差異があった。</span>
+        <span class="en">💡 Never convert raw docs directly to MDL.<br>This project had 65 discrepancies between source and docs.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 11 — Section: 開発
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section blue" data-section="Part 1 — 開発">
+  <div class="tag blue">Part 1 — ②</div>
+  <h1 style="font-size:2.2em;">
+    <span class="jp">開発</span>
+    <span class="en">Build</span>
+  </h1>
+  <div class="section-line"></div>
+  <div class="subtitle">
+    <span class="jp">プロジェクトを読んで、MDL で変更する</span>
+    <span class="en">Read the project, then change it with MDL</span>
+  </div>
+  <div class="section-number">②</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 12 — SHOW FEATURES + 鳥瞰
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 開発">
+  <h2><span class="jp">最初に必ず確認: バージョンと全体構造</span><span class="en">Always Check First: Version &amp; Project Overview</span></h2>
+  <div class="cols cols-2">
+    <div>
+      <h3>SHOW FEATURES</h3>
+      <pre><span class="cm"><span class="jp"># 使える機能を確認（最初に必ず実行）</span><span class="en"># Check available features (always run first)</span></span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW FEATURES"</span>
+
+<span class="cm">Feature                 | Available | Since</span>
+<span class="cm">------------------------|-----------|-------</span>
+<span class="cm">page parameters         | Yes       | 11.0.0</span>
+<span class="cm">portable app            | Yes       | 11.6.0</span>
+<span class="cm">data transformer        | No        | 11.9.0  ← </span><span class="jp">使えない</span><span class="en">unavailable</span></pre>
+      <div class="callout" style="margin-top:10px; font-size:0.82em;">
+        <span class="jp">⚠️ バージョン未確認で新機能の MDL を書くと parse error になる</span>
+        <span class="en">⚠️ Using version-gated MDL without checking causes parse errors</span>
+      </div>
+    </div>
+    <div>
+      <h3>SHOW STRUCTURE</h3>
+      <pre><span class="cm"><span class="jp"># プロジェクト全体の統計</span><span class="en"># Project-wide stats</span></span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW STRUCTURE"</span>
+
+✓ Entities: <span class="nu">104</span>    ✓ Microflows: <span class="nu">236</span>
+✓ Pages: <span class="nu">68</span>       ✓ Workflows: <span class="nu">2</span>
+
+<span class="cm"><span class="jp"># 特定モジュールを掘り下げる</span><span class="en"># Drill into a module</span></span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW STRUCTURE DEPTH 2 IN HD"</span>
+
+Entity HD.Ticket [Subject, Status, Priority, ...]
+Microflow HD.ACT_Ticket_Submit(Ticket) → Boolean
+Page HD.Ticket_NewEdit</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 13 — DESCRIBE ENTITY
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 開発">
+  <h2><span class="jp">DESCRIBE — エンティティを読む</span><span class="en">DESCRIBE — Reading an Entity</span></h2>
+  <div class="callout blue" style="margin-bottom:14px; font-size:0.83em;">
+    <span class="jp">💡 DESCRIBE の出力はそのまま MDL。コピペして改造できる。</span>
+    <span class="en">💡 DESCRIBE output IS MDL — copy it and modify.</span>
+  </div>
+  <pre style="font-size:0.8em;"><span class="cm">$ ./mxcli -p Helpdesk2.mpr -c "DESCRIBE ENTITY HD.Ticket"</span>
+
+create or modify persistent entity HD.Ticket (
+  Subject:   String not null,
+  Description: String,
+  Status:    HD.TicketStatus default Draft,
+  Priority:  HD.TicketPriority default Normal,
+  SLADueAt:  DateTime,
+  IsOverSLA: Boolean default false
+)
+index (Status) index (Priority) index (SLADueAt)   <span class="cm">← <span class="jp">検索を高速化するインデックス</span><span class="en">indexes for fast search</span></span>
+system members (owner, createdDate, changedDate, changedBy);  <span class="cm">← <span class="jp">自動記録</span><span class="en">auto-audited</span></span>
+
+grant HD.CustomerRole on HD.Ticket
+  (create, read (Subject, Status, Priority), write (Subject, Description))
+  where <span class="st">'[System.owner=''[%CurrentUser%]'']'</span>;  <span class="cm">← <span class="jp">自分のチケットだけ見える</span><span class="en">row-level filter</span></span>
+grant HD.AgentRole   on HD.Ticket (create, read *, write *);
+grant HD.ManagerRole on HD.Ticket (create, delete, read *, write *);</pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 14 — DESCRIBE MICROFLOW
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 開発">
+  <h2><span class="jp">DESCRIBE — ビジネスロジックを読む</span><span class="en">DESCRIBE — Reading Business Logic</span></h2>
+  <pre style="font-size:0.79em;"><span class="cm">$ ./mxcli -p Helpdesk2.mpr -c "DESCRIBE MICROFLOW HD.ACT_Ticket_Submit"</span>
+
+<span class="kw">BEGIN</span>
+  <span class="kw">IF</span> $Ticket/Priority = HD.TicketPriority.Critical <span class="kw">THEN</span>
+    <span class="hl">    <span class="kw">CHANGE</span> $Ticket (Status = Open, SLADueAt = <span class="fn">addHours</span>([%CurrentDateTime%], @HD.SLA_CRITICAL_HOURS));</span>
+  <span class="kw">ELSE IF</span> $Ticket/Priority = HD.TicketPriority.High <span class="kw">THEN</span>
+    <span class="kw">CHANGE</span> $Ticket (Status = Open, SLADueAt = <span class="fn">addHours</span>([%CurrentDateTime%], @HD.SLA_HIGH_HOURS));
+  <span class="kw">ELSE</span>
+    <span class="kw">CHANGE</span> $Ticket (Status = Open, SLADueAt = <span class="fn">addHours</span>([%CurrentDateTime%], <span class="nu">24</span>));
+  <span class="kw">END IF</span>;
+  <span class="kw">COMMIT</span> $Ticket;
+  <span class="kw">RETURN</span> true;
+<span class="kw">END</span>;</pre>
+  <div class="cols cols-2" style="margin-top:14px; gap:14px;">
+    <div class="callout blue" style="font-size:0.82em;">
+      <span class="jp">📌 <code>@HD.SLA_CRITICAL_HOURS</code> は定数参照。<br><code>SHOW CONSTANTS IN HD</code> で値を確認できる（= 2時間）</span>
+      <span class="en">📌 <code>@HD.SLA_CRITICAL_HOURS</code> is a constant ref.<br><code>SHOW CONSTANTS IN HD</code> shows its value (= 2 hrs)</span>
+    </div>
+    <div class="callout green" style="font-size:0.82em;">
+      <span class="jp">📌 Draft → Open への状態遷移 + SLA 期限計算が<br>1つのマイクロフローに集約されている</span>
+      <span class="en">📌 Draft → Open transition + SLA calculation<br>consolidated in one microflow</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 15 — SHOW IMPACT / CALLERS
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 開発">
+  <h2><span class="jp">変更前に必ず確認: 影響範囲分析</span><span class="en">Before Changing: Impact Analysis</span></h2>
+  <div class="cols cols-2">
+    <div>
+      <h3>SHOW IMPACT</h3>
+      <pre style="font-size:0.79em;"><span class="cm">$ ./mxcli -p Helpdesk2.mpr -c "SHOW IMPACT OF HD.Ticket"</span>
+
+| SourceType | SourceName              | RefKind  |
+|------------|-------------------------|----------|
+| MICROFLOW  | HD.ACT_Ticket_New       | create   |
+| MICROFLOW  | HD.DS_MyTickets         | retrieve |
+| MICROFLOW  | HD.DS_OpenHighTickets   | retrieve |
+| MICROFLOW  | HD.DS_OverdueTicketCount| retrieve |
+| PAGE       | HD.Ticket_NewEdit       | parameter|
+| PAGE       | HD.Ticket_Detail        | parameter|
+  ... <span class="nu">13</span> <span class="jp">件</span><span class="en">items</span> total</pre>
+      <div class="callout" style="font-size:0.82em; margin-top:8px;">
+        <span class="jp">属性追加前に影響する MF・ページが事前にわかる</span>
+        <span class="en">Know all affected MFs and pages before adding an attribute</span>
+      </div>
+    </div>
+    <div>
+      <h3>SHOW CALLERS / CALLEES / CONTEXT</h3>
+      <pre style="font-size:0.79em;"><span class="cm"><span class="jp"># 誰がこのMFを呼ぶか</span><span class="en"># Who calls this MF?</span></span>
+./mxcli -c <span class="st">"SHOW CALLERS OF HD.ACT_Ticket_Validate"</span>
+
+<span class="cm"><span class="jp"># このMFは何を呼ぶか</span><span class="en"># What does this MF call?</span></span>
+./mxcli -c <span class="st">"SHOW CALLEES OF HD.ACT_Ticket_Submit"</span>
+
+<span class="cm"><span class="jp"># 上記3つを一括で出力</span><span class="en"># All at once</span></span>
+./mxcli -c <span class="st">"SHOW CONTEXT OF HD.ACT_Ticket_Submit"</span></pre>
+      <div class="card" style="margin-top:12px;">
+        <h3 style="font-size:0.9em;"><span class="jp">その他の探索コマンド</span><span class="en">More exploration commands</span></h3>
+        <pre style="font-size:0.77em;"><span class="cm"><span class="jp"># セキュリティ全体像</span><span class="en"># Security overview</span></span>
+./mxcli -c <span class="st">"SHOW SECURITY MATRIX IN HD"</span>
+
+<span class="cm"><span class="jp"># ロール別ホームページ</span><span class="en"># Role-based home pages</span></span>
+./mxcli -c <span class="st">"SHOW NAVIGATION HOMES"</span>
+
+<span class="cm"><span class="jp"># Catalog SQL クエリ</span><span class="en"># Catalog SQL query</span></span>
+./mxcli -c <span class="st">"REFRESH CATALOG"</span>
+./mxcli -c <span class="st">"SELECT Name, ModuleName FROM CATALOG.ENTITIES WHERE ModuleName='HD'"</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 16 — MDL の書き方
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 開発">
+  <h2><span class="jp">MDL の書き方: DESCRIBE → コピペ → 改造</span><span class="en">Writing MDL: DESCRIBE → Copy → Modify</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title"><span class="jp">既存の定義を読む</span><span class="en">Read the existing definition</span></div>
+            <pre style="margin-top:6px; font-size:0.8em;">./mxcli -c <span class="st">"DESCRIBE PAGE HD.Ticket_NewEdit"</span>
+<span class="cm"><span class="jp"># → ウィジェット名を確認</span><span class="en"># → find widget names</span></span>
+<span class="cm">#    txtSubject, cbPriority, btnSave ...</span></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title"><span class="jp">MDL スクリプトを書く</span><span class="en">Write the MDL script</span></div>
+            <pre style="margin-top:6px; font-size:0.8em;"><span class="cm"># mdlsource/my-change.mdl</span>
+<span class="kw">ALTER</span> PAGE HD.Ticket_NewEdit {
+  <span class="kw">INSERT AFTER</span> txtSubject {
+    <span class="ty">COMBOBOX</span> cbCategory (
+      Label: <span class="st">'カテゴリ'</span>,
+      Attribute: Category
+    )
+  }
+}</pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title"><span class="jp">check → exec で安全に適用</span><span class="en">check → exec to apply safely</span></div>
+            <pre style="margin-top:6px; font-size:0.8em;">./mxcli check my-change.mdl -p Helpdesk2.mpr <span class="kw">--references</span>
+./mxcli exec  my-change.mdl -p Helpdesk2.mpr</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card accent-left">
+        <h3><span class="jp">識別子は常に " で囲む</span><span class="en">Always quote identifiers with "</span></h3>
+        <pre style="font-size:0.82em;"><span class="cm"><span class="jp"># 予約語の衝突を防ぐ（自動的に除去される）</span><span class="en"># Prevents keyword conflicts (auto-stripped)</span></span>
+<span class="kw">ALTER</span> ENTITY HD.<span class="st">"Ticket"</span>
+  <span class="kw">ADD</span> <span class="st">"Category"</span>: <span class="ty">Enum</span> HD.TicketCategory;
+<span class="cm">
+<span class="jp"># "Create", "Status" など予約語でも安全</span>
+<span class="en"># Safe even for reserved words like "Status"</span></span></pre>
+      </div>
+      <div class="card accent-left blue" style="margin-top:12px;">
+        <h3><span class="jp">スクリプトは mdlsource/ に保存する</span><span class="en">Save scripts in mdlsource/</span></h3>
+        <div class="tree" style="font-size:0.82em; margin-top:8px;">
+          <div><span class="folder">mdlsource/</span></div>
+          <div>&nbsp;├── ex-category.mdl</div>
+          <div>&nbsp;└── ex-survey.mdl</div>
+        </div>
+        <p style="font-size:0.8em; color:var(--text-muted); margin-top:8px;">
+          <span class="jp">git で変更履歴を管理できる</span>
+          <span class="en">Track change history in git</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 17 — Section: 実行
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section orange" data-section="Part 1 — 実行">
+  <div class="tag" style="background:var(--accent);">Part 1 — ③</div>
+  <h1 style="font-size:2.2em;">
+    <span class="jp">実行</span>
+    <span class="en">Run</span>
+  </h1>
+  <div class="section-line" style="background:var(--accent);"></div>
+  <div class="subtitle">
+    <span class="jp">Docker で1コマンド起動する</span>
+    <span class="en">Launch with a single Docker command</span>
+  </div>
+  <div class="section-number">③</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 18 — docker run
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 実行">
+  <h2><span class="jp">mxcli docker run — 何が起きるか</span><span class="en">mxcli docker run — What Happens Inside</span></h2>
+  <div class="cols cols-40-60" style="gap:20px; align-items:start;">
+    <div>
+      <pre style="font-size:0.85em;">./mxcli docker run \
+  -p Helpdesk2.mpr</pre>
+      <div class="steps" style="margin-top:14px;">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body"><span class="jp">mxbuild を自動ダウンロード（初回のみ）</span><span class="en">Auto-download mxbuild (first time only)</span></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><span class="jp">.mpr をビルド → Portable App Distribution 生成</span><span class="en">Build .mpr → generate Portable App Distribution</span></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><span class="jp">docker-compose.yml を自動生成・起動</span><span class="en">Generate &amp; launch docker-compose.yml</span></div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body"><span class="jp">http://localhost:8080 が応答するまで待機</span><span class="en">Wait until http://localhost:8080 responds</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <pre style="font-size:0.79em;"><span class="cm"># <span class="jp">自動生成される</span><span class="en">Auto-generated</span> docker-compose.yml</span>
+services:
+  mendix:
+    image: eclipse-temurin:21-jre
+    ports:
+      - <span class="st">"8080:8080"</span>   <span class="cm"><span class="jp"># アプリ</span><span class="en"># app</span></span>
+      - <span class="st">"8090:8090"</span>   <span class="cm"><span class="jp"># 管理API（OQL が使う）</span><span class="en"># admin API (used by oql)</span></span>
+    environment:
+      - RUNTIME_PARAMS_DATABASETYPE=POSTGRESQL
+      - RUNTIME_PARAMS_DATABASEHOST=db:5432
+      - RUNTIME_ADMINUSER_PASSWORD=Admin1234!
+  db:
+    image: postgres:17-alpine</pre>
+      <table style="margin-top:12px; font-size:0.82em;">
+        <thead><tr><th><span class="jp">ユーザー</span><span class="en">User</span></th><th><span class="jp">パスワード</span><span class="en">Password</span></th><th><span class="jp">ロール</span><span class="en">Role</span></th></tr></thead>
+        <tr><td>MxAdmin</td><td>Admin1234!</td><td>Administrator</td></tr>
+        <tr><td>demo_agent@...</td><td>Dem0Agent#2026</td><td>Agent</td></tr>
+        <tr><td>demo_customer@...</td><td>Dem0Customer#2026</td><td>Customer</td></tr>
+        <tr><td>demo_manager@...</td><td>Dem0Manager#2026</td><td>Manager</td></tr>
+      </table>
+      <pre style="margin-top:10px; font-size:0.8em;"><span class="cm"><span class="jp"># コード変更後のホットリロード</span><span class="en"># Hot reload after code changes</span></span>
+./mxcli docker reload -p Helpdesk2.mpr
+
+<span class="cm"><span class="jp"># 停止（docker down はバグがあるため compose で代替）</span><span class="en"># Stop (mxcli docker down has a bug — use compose directly)</span></span>
+cd .docker && docker compose down</pre>
+      <div class="callout" style="margin-top:10px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red); font-size:0.8em;">
+        <strong>⚠️ <span class="jp">Pluggable Widget（Gallery / DataGrid2 / ComboBox）を MDL で追加・変更した場合</span><span class="en">When adding/changing Pluggable Widgets (Gallery / DataGrid2 / ComboBox) via MDL</span></strong><br>
+        <span class="jp">Studio Pro でプロジェクトを開き直し、<br><code>App → Tools → Update All Widgets</code> を実行してから docker reload すること。<br>これをしないと CE0463 が発生してアプリが正常に動作しない。</span>
+        <span class="en">Re-open the project in Studio Pro and run<br><code>App → Tools → Update All Widgets</code> before docker reload.<br>Skipping this causes CE0463 — the app will not work correctly.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 19 — Section: テスト
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section purple" data-section="Part 1 — テスト">
+  <div class="tag purple">Part 1 — ④</div>
+  <h1 style="font-size:2.2em;">
+    <span class="jp">テスト</span>
+    <span class="en">Test</span>
+  </h1>
+  <div class="section-line" style="background:var(--purple);"></div>
+  <div class="subtitle">
+    <span class="jp">Playwright で UI 検証 + OQL で DB 確認</span>
+    <span class="en">Playwright for UI + OQL for DB assertion</span>
+  </div>
+  <div class="section-number">④</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 20 — playwright verify
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — テスト">
+  <h2><span class="jp">テスト: Playwright + OQL + HTML レポート</span><span class="en">Testing: Playwright + OQL + HTML Report</span></h2>
+  <div class="cols cols-2" style="gap:16px;">
+    <div>
+      <h3><span class="jp">① テストスクリプト（bash）</span><span class="en">① Test script (bash)</span></h3>
+      <pre style="font-size:0.76em;"><span class="cm"><span class="jp"># 実行方法（2通り）</span><span class="en"># Two ways to run</span></span>
+
+<span class="cm"><span class="jp"># A) mxcli 経由（単体確認スクリプト向け）</span><span class="en"># A) via mxcli (for single-check scripts)</span></span>
+./mxcli playwright verify tests/verify-ticket-newedit.sh
+
+<span class="cm"><span class="jp"># B) bash 直接実行（E2E・レポート生成付き）</span><span class="en"># B) direct bash (E2E with report generation)</span></span>
+bash tests/e2e-workflow-test.sh
+
+<span class="cm"><span class="jp"># スクリプト内の主要コマンド</span><span class="en"># Key commands inside the script</span></span>
+PW=<span class="st">"/c/...npm/playwright-cli"</span>
+$PW open http://localhost:<span class="nu">8080</span>
+$PW fill <span class="st">"#usernameInput"</span> <span class="st">"demo_agent@helpdesk.test"</span>
+$PW click <span class="st">"#loginButton"</span>
+$PW click <span class="st">".mx-name-btnNew"</span>  <span class="cm"><span class="jp"># .mx-name-xxx でウィジェット指定</span><span class="en"># target by .mx-name-xxx</span></span>
+$PW eval <span class="st">"document.querySelector('.mx-name-tbSubject') !== null
+  || (() => { throw new Error('not found') })()"</span>
+$PW fill <span class="st">".mx-name-tbSubject input"</span> <span class="st">"Test Ticket"</span>
+$PW click <span class="st">".mx-name-btnSave"</span>
+$PW snapshot  <span class="cm"><span class="jp"># スクリーンショット撮影</span><span class="en"># take screenshot</span></span></pre>
+
+      <h3 style="margin-top:12px;">② OQL — DB <span class="jp">検証</span><span class="en">Assertion</span></h3>
+      <pre style="font-size:0.76em;"><span class="cm"><span class="jp"># スクリプト末尾でDBの中身を確認</span><span class="en"># Assert DB at end of script</span></span>
+RESULT=$(./mxcli oql -p Helpdesk2.mpr --json \
+  <span class="st">"SELECT Subject, Status FROM HD.Ticket
+   WHERE Subject = 'Test Ticket'"</span>)
+echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> \
+  || (echo <span class="st">"FAIL"</span> && exit <span class="nu">1</span>)</pre>
+    </div>
+    <div>
+      <h3>③ HTML <span class="jp">レポート自動生成</span><span class="en">Auto-generated HTML Report</span></h3>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="font-size:0.8em; color:var(--text-muted); margin-bottom:8px;">
+          <span class="jp">E2E スクリプトが自動的に生成する</span>
+          <span class="en">Generated automatically by the E2E script</span>
+        </div>
+        <div class="tree" style="font-size:0.8em;">
+          <div><span class="folder">tests/reports/20260531_070345/</span></div>
+          <div>&nbsp;├── <span class="file-primary">report.html</span> &nbsp;<span style="color:var(--accent);font-size:0.85em;">← PASS/FAIL + スクショ + OQL結果</span></div>
+          <div>&nbsp;├── 01_customer_login.png</div>
+          <div>&nbsp;├── 02_new_ticket_form.png</div>
+          <div>&nbsp;├── 03_ticket_filled.png ... 12枚</div>
+          <div>&nbsp;└── trace_agent.trace</div>
+        </div>
+      </div>
+      <div class="card" style="font-size:0.8em;">
+        <h3 style="font-size:0.9em;"><span class="jp">report.html の中身</span><span class="en">report.html contents</span></h3>
+        <ul class="list" style="margin-top:6px;">
+          <li><span class="badge badge-green">PASS</span> / <span class="badge badge-red">FAIL</span> <span class="jp">バナー</span><span class="en">result banner</span></li>
+          <li><span class="jp">ステップごとのスクリーンショット（base64 埋め込み）</span><span class="en">Per-step screenshots (base64 embedded)</span></li>
+          <li><span class="jp">OQL 検証データ（Ticket / EscalationRequest）</span><span class="en">OQL verification data tables</span></li>
+          <li><span class="jp">テスト対象・実施日時・環境情報</span><span class="en">Target app, timestamp, environment</span></li>
+        </ul>
+      </div>
+      <div class="callout green" style="margin-top:10px; font-size:0.8em;">
+        <span class="jp">✅ 2段階検証: Playwright（UI）+ OQL（DB）<br>結果がレポートとして残るので再現性の確認ができる</span>
+        <span class="en">✅ 2-layer verification: Playwright (UI) + OQL (DB)<br>Report persists — reproducibility confirmed</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 21 — よくある落とし穴
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 1 — 落とし穴集">
+  <h2><span class="jp">⚠️ よくある落とし穴 — 詰まったらここを見る</span><span class="en">⚠️ Common Pitfalls — Check Here When Stuck</span></h2>
+
+  <div class="cols cols-2" style="gap:16px;">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+
+      <div class="card accent-left" style="border-left-color:var(--red); padding:14px 16px;">
+        <div style="font-size:0.78em; font-weight:700; color:var(--red); margin-bottom:8px;">
+          🔴 <span class="jp">Studio Pro / mxcli 共存</span><span class="en">Studio Pro / mxcli Co-existence</span>
+        </div>
+        <table style="font-size:0.76em;">
+          <tr>
+            <td style="color:var(--text-muted); width:45%; padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">mxcli exec 中に Studio Pro を開いている</span><span class="en">Studio Pro open during mxcli exec</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ .mpr 破損の恐れ。Studio Pro を必ず閉じてから exec する</span><span class="en">→ Risk of .mpr corruption. Always close Studio Pro before exec</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">Studio Pro が開けない（InvalidOperationException クラッシュ）</span><span class="en">Studio Pro crashes on open (InvalidOperationException)</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><code style="font-size:0.9em;">cp -r mprcontents/* .mendix-cache/base_data/mprcontents/<br>cp App.mpr .mendix-cache/base_data/App.mpr</code><br><span style="font-size:0.85em; color:var(--text-muted);"><span class="jp">mprcontents と .mendix-cache/base_data のズレが原因。git checkout では直らない。</span><span class="en">Caused by mprcontents / .mendix-cache/base_data mismatch. git checkout won't fix it.</span></span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0;"><span class="jp">Pluggable Widget 追加後にアプリが動かない（CE0463）</span><span class="en">App broken after adding Pluggable Widget (CE0463)</span></td>
+            <td style="padding:4px 0 4px 8px;"><span class="jp">→ Studio Pro で <code>App → Tools → Update All Widgets</code> を実行してから docker reload</span><span class="en">→ Run <code>App → Tools → Update All Widgets</code> in Studio Pro, then docker reload</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card accent-left" style="border-left-color:var(--accent); padding:14px 16px;">
+        <div style="font-size:0.78em; font-weight:700; color:var(--accent); margin-bottom:8px;">
+          🟡 <span class="jp">MDL 構文の落とし穴</span><span class="en">MDL Syntax Pitfalls</span>
+        </div>
+        <table style="font-size:0.76em;">
+          <tr>
+            <td style="color:var(--text-muted); width:45%; padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><code>action: microflow X() close_page</code> <span class="jp">連鎖が動かない</span><span class="en">chaining not working</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ MDL 非サポート。<code>CLOSE PAGE</code> を内包するラッパー MF を作る</span><span class="en">→ Not supported in MDL. Wrap in a microflow that includes <code>CLOSE PAGE</code></span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><code>RETURNS Ticket AS $Ticket</code> + <code>$Ticket = CREATE ...</code> <span class="jp">エラー</span><span class="en">error</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ 二重宣言。CREATE の出力変数を別名（例: <code>$NewTicket</code>）にする</span><span class="en">→ Double declaration. Name the CREATE output variable differently (e.g. <code>$NewTicket</code>)</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><code>Agent</code> <span class="jp">などがパラメータ名で使えない</span><span class="en">reserved word as param name</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ MDL 予約語。<code>SelectedAgent</code> などにリネーム</span><span class="en">→ MDL reserved word. Rename to e.g. <code>SelectedAgent</code></span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">ページタイトル + Params を同時に指定するとクラッシュ</span><span class="en">Page title + Params together crashes MPR</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ Params がある場合は Title を省略する</span><span class="en">→ Omit Title when Params are present</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><code>ALTER PAGE</code> <span class="jp">で DataView の DataSource タイプは変更不可</span><span class="en">Cannot change DataView DataSource type via ALTER PAGE</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ Studio Pro で直接変更する</span><span class="en">→ Change in Studio Pro directly</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0;"><code>REPLACE</code> <span class="jp">で元と同名のウィジェット名を指定するとエラー</span><span class="en">REPLACE fails if new widget has same name as replaced</span></td>
+            <td style="padding:4px 0 4px 8px;"><span class="jp">→ REPLACE 後のウィジェットは必ず別名にする</span><span class="en">→ Always use a different name for the replacement widget</span></td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+
+      <div class="card accent-left" style="border-left-color:var(--accent2); padding:14px 16px;">
+        <div style="font-size:0.78em; font-weight:700; color:var(--accent2); margin-bottom:8px;">
+          🔵 <span class="jp">Mendix 設計の落とし穴</span><span class="en">Mendix Design Pitfalls</span>
+        </div>
+        <table style="font-size:0.76em;">
+          <tr>
+            <td style="color:var(--text-muted); width:45%; padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">NPE をアソシエーション経由で RETRIEVE する（CE0056）</span><span class="en">Retrieve NPE via association (CE0056)</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ NPE は必ずパラメータで渡す。アソシエーション RETRIEVE 不可</span><span class="en">→ Always pass NPE as parameter. Cannot retrieve via association</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">バリデーション NPE の Boolean がデフォルト false のまま</span><span class="en">Validation NPE Boolean defaults to false</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ 全フィールド入力済みでもフォームが送信できない。CREATE 時に <code>IsValid = true</code> を明示する</span><span class="en">→ Form silently rejects even valid input. Explicitly set <code>IsValid = true</code> at create</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">AfterStartup MF で <code>[%CurrentUser%]</code> が使えない</span><span class="en"><code>[%CurrentUser%]</code> unusable in AfterStartup MF</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ Runtime 評価のため。XPath でパラメータを明示する</span><span class="en">→ Runtime-only token. Use explicit XPath parameter instead</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">AfterStartup MF で CE0142（戻り値なし）</span><span class="en">CE0142 in AfterStartup MF (no return value)</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ <code>RETURNS Boolean</code> の宣言が必須</span><span class="en">→ Must declare <code>RETURNS Boolean</code></span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0;"><span class="jp">DataGrid2 controlbar ボタンで <code>$currentObject</code> が MF 引数に使えない（CE0117）</span><span class="en">CE0117: <code>$currentObject</code> unavailable in DataGrid2 controlbar MF args</span></td>
+            <td style="padding:4px 0 4px 8px;"><span class="jp">→ <code>ShowContentAs: customContent</code> 列に actionbutton を入れて渡す</span><span class="en">→ Use <code>ShowContentAs: customContent</code> column with actionbutton to pass it</span></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card accent-left" style="border-left-color:var(--accent3); padding:14px 16px;">
+        <div style="font-size:0.78em; font-weight:700; color:var(--accent3); margin-bottom:8px;">
+          🟢 <span class="jp">Playwright / OQL の落とし穴</span><span class="en">Playwright / OQL Pitfalls</span>
+        </div>
+        <table style="font-size:0.76em;">
+          <tr>
+            <td style="color:var(--text-muted); width:45%; padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">前のセッションが残っていて起動エラー</span><span class="en">Stale session causes launch error</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ スクリプト冒頭で <code>$PW close-all</code> を実行</span><span class="en">→ Run <code>$PW close-all</code> at the top of every script</span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">同名ウィジェットが複数あって strict mode violation</span><span class="en">Multiple same-name widgets → strict mode violation</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ <code>eval "document.querySelector('.mx-name-X').click()"</code> または <code>querySelectorAll()[1]</code> でインデックス指定</span><span class="en">→ Use <code>eval "document.querySelector()"</code> or <code>querySelectorAll()[1]</code></span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0; border-bottom:1px solid #1e293b;"><span class="jp">COMBOBOX が <code>select</code> コマンド非対応</span><span class="en">COMBOBOX doesn't respond to <code>select</code> command</span></td>
+            <td style="padding:4px 0 4px 8px; border-bottom:1px solid #1e293b;"><span class="jp">→ <code>[role=combobox].click()</code> → sleep 1 → <code>[role=option]</code> find+click</span><span class="en">→ <code>[role=combobox].click()</code> → sleep 1 → find+click <code>[role=option]</code></span></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-muted); padding:4px 8px 4px 0;"><span class="jp">OQL で DELETE できない</span><span class="en">OQL does not support DELETE</span></td>
+            <td style="padding:4px 0 4px 8px;"><code style="font-size:0.88em;">docker exec docker-db-1 psql -U mendix mendix -c "DELETE FROM ..."</code></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="callout" style="font-size:0.78em; margin-top:0;">
+        <span class="jp">💡 MDL スクリプトは必ずドメインモデル → マイクロフロー → ページ → セキュリティの順に適用する。逆順は BSON エラーの原因になる。</span>
+        <span class="en">💡 Always apply MDL in order: Domain model → Microflows → Pages → Security. Reverse order causes BSON errors.</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 22 — Section: Part 2 (演習1)
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section" data-section="Part 2 — 演習1">
+  <div class="tag">Part 2 — 演習1</div>
+  <h1 style="font-size:2em;">
+    <span class="jp">アプリをゼロから作る</span>
+    <span class="en">Build the App from Scratch</span>
+  </h1>
+  <div class="section-line"></div>
+  <div class="subtitle">
+    <span class="jp">reset 済み .mpr → helpdesk-app.mdl を流す</span>
+    <span class="en">Start from reset .mpr → apply helpdesk-app.mdl</span>
+  </div>
+  <div style="margin-top:20px;" class="badge badge-amber">20 min</div>
+  <div class="section-number">L1</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 22 — 演習1: 手順
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 2 — 演習1">
+  <h2><span class="jp">演習1: 手順</span><span class="en">Lab 1: Steps</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">渡された状態を確認する</span><span class="en">Confirm the starting state</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW MODULES"</span>
+<span class="cm"><span class="jp"># HD も KB もない状態を確認</span><span class="en"># Confirm: no HD, no KB</span></span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">helpdesk-app.mdl を流す</span><span class="en">Apply helpdesk-app.mdl</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli exec mdl-examples/helpdesk-app.mdl \
+  -p Helpdesk2.mpr</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">何が作られたか確認する</span><span class="en">Verify what was created</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW MODULES"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW STRUCTURE DEPTH 2 IN HD"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW NAVIGATION HOMES"</span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">docker reload して動作確認</span><span class="en">Hot reload &amp; check in browser</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli docker reload -p Helpdesk2.mpr
+<span class="cm"><span class="jp"># http://localhost:8080 でログイン</span><span class="en"># Login at http://localhost:8080</span></span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">OQL でデータ状態を確認</span><span class="en">Confirm DB state with OQL</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli oql -p Helpdesk2.mpr \
+  <span class="st">"SELECT count(ID) FROM HD.Ticket"</span>
+<span class="cm"># → 0  "MDL <span class="jp">は構造を作る。データは作らない</span><span class="en">creates structure, not data</span>"</span></pre>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="jp">helpdesk-app.mdl が作るもの</span><span class="en">What helpdesk-app.mdl creates</span></h3>
+        <table style="margin-top:10px; font-size:0.83em;">
+          <tr><td><span class="jp">モジュール</span><span class="en">Modules</span></td><td><span class="check">KB, HD</span></td></tr>
+          <tr><td><span class="jp">エンティティ</span><span class="en">Entities</span></td><td>7</td></tr>
+          <tr><td><span class="jp">マイクロフロー</span><span class="en">Microflows</span></td><td>41</td></tr>
+          <tr><td><span class="jp">ページ</span><span class="en">Pages</span></td><td>8</td></tr>
+          <tr><td><span class="jp">ワークフロー</span><span class="en">Workflows</span></td><td>2</td></tr>
+          <tr><td><span class="jp">デモユーザー</span><span class="en">Demo users</span></td><td>3</td></tr>
+          <tr><td><span class="jp">ユーザーロール</span><span class="en">User roles</span></td><td>Customer / Agent / Manager</td></tr>
+        </table>
+      </div>
+      <div class="callout green" style="margin-top:12px; font-size:0.83em;">
+        <span class="jp">✅ 1661行の MDL が数十秒で完全なアプリを構築する</span>
+        <span class="en">✅ 1,661 lines of MDL build a complete app in seconds</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 23 — Section: Part 3 (演習2)
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-section" style="background:linear-gradient(135deg,#1a2a3a 0%,#0f172a 100%);" data-section="Part 3 — 演習2">
+  <div class="tag green">Part 3 — 演習2</div>
+  <h1 style="font-size:2em;">
+    <span class="jp">機能を追加する + テストする</span>
+    <span class="en">Extend the App + Test It</span>
+  </h1>
+  <div class="section-line"></div>
+  <div class="subtitle">
+    <span class="jp">カテゴリ追加 → Playwright → OQL</span>
+    <span class="en">Add Category → Playwright → OQL</span>
+  </div>
+  <div style="margin-top:20px;" class="badge badge-green">25 min</div>
+  <div class="section-number">L2</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 24 — 演習2: Step 1-2
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 3 — 演習2">
+  <h2><span class="jp">演習2 Step 1–2: 現状把握 → MDL を書く</span><span class="en">Lab 2 Step 1–2: Inspect → Write MDL</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div>
+      <h3><span class="jp">Step 1: 現状を確認する</span><span class="en">Step 1: Inspect current state</span></h3>
+      <pre style="font-size:0.8em;"><span class="cm"><span class="jp"># エンティティの現状確認</span><span class="en"># Check current entity</span></span>
+./mxcli -p Helpdesk2.mpr -c \
+  <span class="st">"DESCRIBE ENTITY HD.Ticket"</span>
+
+<span class="cm"><span class="jp"># 変更前の影響範囲を確認</span><span class="en"># Check impact before changing</span></span>
+./mxcli -p Helpdesk2.mpr -c \
+  <span class="st">"SHOW IMPACT OF HD.Ticket"</span>
+
+<span class="cm"><span class="jp"># ページのウィジェット名を確認</span><span class="en"># Find widget names on the page</span></span>
+./mxcli -p Helpdesk2.mpr -c \
+  <span class="st">"DESCRIBE PAGE HD.Ticket_NewEdit"</span></pre>
+    </div>
+    <div>
+      <h3><span class="jp">Step 2: MDL を書いて適用する</span><span class="en">Step 2: Write &amp; apply MDL</span></h3>
+      <pre style="font-size:0.79em;"><span class="cm"># mdlsource/ex-category.mdl</span>
+<span class="kw">CREATE ENUMERATION</span> HD.<span class="st">"TicketCategory"</span> (
+  <span class="st">"Hardware"</span> CAPTION <span class="st">'ハードウェア'</span>,
+  <span class="st">"Software"</span> CAPTION <span class="st">'ソフトウェア'</span>,
+  <span class="st">"Network"</span>  CAPTION <span class="st">'ネットワーク'</span>,
+  <span class="st">"Other"</span>    CAPTION <span class="st">'その他'</span>
+);
+
+<span class="kw">ALTER ENTITY</span> HD.<span class="st">"Ticket"</span>
+  <span class="kw">ADD</span> <span class="st">"Category"</span>: <span class="ty">Enum</span> HD.TicketCategory;
+
+<span class="kw">ALTER</span> PAGE HD.Ticket_NewEdit {
+  <span class="kw">INSERT AFTER</span> txtSubject {
+    <span class="ty">COMBOBOX</span> cbCategory (
+      Label:     <span class="st">'カテゴリ'</span>,
+      Attribute: Category
+    )
+  }
+}</pre>
+      <pre style="margin-top:8px; font-size:0.8em;">./mxcli check ex-category.mdl -p Helpdesk2.mpr <span class="kw">--references</span>
+./mxcli exec  ex-category.mdl -p Helpdesk2.mpr</pre>
+      <div class="callout" style="margin-top:8px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red); font-size:0.79em;">
+        <strong>⚠️ exec <span class="jp">後は必ずこの手順で</span><span class="en">After exec — always follow these steps</span></strong><br>
+        <span class="jp">① Studio Pro でプロジェクトを開き直す（Reload ダイアログが出る）<br>② <code>App → Tools → Update All Widgets</code> を実行<br>③ Studio Pro でプロジェクトを閉じる<br>④ <code>./mxcli docker reload -p Helpdesk2.mpr</code></span>
+        <span class="en">① Re-open project in Studio Pro (Reload dialog appears)<br>② Run <code>App → Tools → Update All Widgets</code><br>③ Close project in Studio Pro<br>④ <code>./mxcli docker reload -p Helpdesk2.mpr</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 25 — 演習2: Step 3 Playwright + OQL
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Part 3 — 演習2">
+  <h2><span class="jp">演習2 Step 3: Playwright + OQL でテスト</span><span class="en">Lab 2 Step 3: Test with Playwright + OQL</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div>
+      <h3>tests/verify-category.sh</h3>
+      <pre style="font-size:0.76em;">PW=<span class="st">"/c/...npm/playwright-cli"</span>
+$PW open http://localhost:<span class="nu">8080</span>
+$PW fill <span class="st">"#usernameInput"</span> <span class="st">"demo_agent@helpdesk.test"</span>
+$PW fill <span class="st">"#passwordInput"</span>  <span class="st">"Dem0Agent#2026"</span>
+$PW click <span class="st">"#loginButton"</span>
+$PW click <span class="st">".mx-name-btnNew"</span>
+
+<span class="cm"><span class="jp"># cbCategory が存在するか確認</span><span class="en"># Verify cbCategory widget exists</span></span>
+$PW eval <span class="st">"document.querySelector('.mx-name-cbCategory') !== null
+  || (() => { throw new Error('cbCategory not found') })()"</span>
+
+$PW fill <span class="st">".mx-name-tbSubject input"</span> <span class="st">"Category Test"</span>
+
+<span class="cm"><span class="jp"># カテゴリを選択</span><span class="en"># Select a category</span></span>
+$PW eval <span class="st">"document.querySelector('.mx-name-cbCategory [role=combobox]').click()"</span>
+sleep <span class="nu">1</span>
+$PW eval <span class="st">"Array.from(document.querySelectorAll('[role=option]'))
+  .find(o => o.textContent.trim() === 'ソフトウェア').click()"</span>
+sleep <span class="nu">1</span>
+$PW screenshot
+$PW click <span class="st">".mx-name-btnSave"</span>
+$PW snapshot
+
+<span class="cm"><span class="jp"># OQL で DB を確認</span><span class="en"># Verify DB with OQL</span></span>
+RESULT=$(./mxcli oql -p Helpdesk2.mpr --json \
+  <span class="st">"SELECT Subject, Category FROM HD.Ticket
+   WHERE Subject = 'Category Test'"</span>)
+echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Software"</span> \
+  || (echo <span class="st">"FAIL: Category not saved"</span> && exit <span class="nu">1</span>)
+echo <span class="st">"PASS"</span></pre>
+    </div>
+    <div>
+      <pre style="font-size:0.85em;"><span class="cm"><span class="jp"># 実行</span><span class="en"># Run</span></span>
+./mxcli playwright verify \
+  tests/verify-category.sh</pre>
+      <div class="card" style="margin-top:14px;">
+        <h3 style="font-size:0.9em;"><span class="jp">テストが確認すること</span><span class="en">What the test verifies</span></h3>
+        <ul class="list" style="margin-top:8px;">
+          <li><code>.mx-name-cbCategory</code> <span class="jp">がページに存在する</span><span class="en">widget exists on page</span></li>
+          <li><span class="jp">選択肢「ソフトウェア」が出てくる</span><span class="en">option "ソフトウェア" appears in dropdown</span></li>
+          <li><span class="jp">保存後のスクリーンショット</span><span class="en">screenshot after save</span></li>
+          <li>DB <span class="jp">に</span><span class="en">in DB: </span>Category = <code>Software</code> <span class="jp">で保存されている</span><span class="en">persisted correctly</span></li>
+        </ul>
+      </div>
+      <div class="callout" style="margin-top:12px; font-size:0.82em;">
+        <span class="jp">⚠️ <code>cbCategory not found</code> → INSERT AFTER のウィジェット名を確認<br>⚠️ <code>Category not saved</code> → Enumeration 値名と OQL の値を確認</span>
+        <span class="en">⚠️ <code>cbCategory not found</code> → check INSERT AFTER widget name<br>⚠️ <code>Category not saved</code> → match Enum value name with OQL value</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 26 — まとめ
+══════════════════════════════════════════════════════════════ -->
+<div class="slide slide-title" data-section="まとめ">
+  <div style="max-width:780px; text-align:left;">
+    <div class="tag green"><span class="jp">まとめ</span><span class="en">Wrap-up</span></div>
+    <h2 style="font-size:1.8em; margin-bottom:24px;">
+      <span class="jp">今日体験した4ステップ</span>
+      <span class="en">The 4-Step Cycle You Experienced Today</span>
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th><span class="jp">ステップ</span><span class="en">Step</span></th>
+          <th><span class="jp">使ったもの</span><span class="en">Tool</span></th>
+          <th><span class="jp">学んだこと</span><span class="en">Key Takeaway</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-green"><span class="jp">仕様化</span><span class="en">Spec</span></span></td>
+          <td>migration-design-package</td>
+          <td style="font-size:0.85em;"><span class="jp">01-enriched 相当を作ることがゴール</span><span class="en">Goal: produce an 01-enriched equivalent</span></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue"><span class="jp">開発</span><span class="en">Build</span></span></td>
+          <td>DESCRIBE / SHOW IMPACT<br>check → exec</td>
+          <td style="font-size:0.85em;"><span class="jp">読んでから変更、影響範囲を先に把握</span><span class="en">Read first, know impact before changing</span></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-amber"><span class="jp">実行</span><span class="en">Run</span></span></td>
+          <td>docker run / docker reload</td>
+          <td style="font-size:0.85em;"><span class="jp">環境構築なしで即動かせる</span><span class="en">No setup — runs instantly</span></td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-red" style="background:rgba(167,139,250,0.15);color:#a78bfa;border-color:#a78bfa55;"><span class="jp">テスト</span><span class="en">Test</span></span></td>
+          <td>playwright verify / oql</td>
+          <td style="font-size:0.85em;"><span class="jp">UI + DB の2段階で品質を担保</span><span class="en">UI layer + DB layer = two-layer quality gate</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout green" style="margin-top:20px; font-size:0.95em; text-align:center;">
+      <span class="jp">🎯 このサイクルが回せれば、Studio Pro を開かずに Mendix 開発ができる</span>
+      <span class="en">🎯 Master this cycle and you can develop Mendix without ever opening Studio Pro</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<!-- Bottom nav -->
+<div class="bottomnav">
+  <button class="nav-btn" id="btnPrev" onclick="navigate(-1)" disabled>← <span class="jp">前へ</span><span class="en">Prev</span></button>
+  <div class="slide-dots" id="dots"></div>
+  <button class="nav-btn primary" id="btnNext" onclick="navigate(1)"><span class="jp">次へ</span><span class="en">Next</span> →</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dotsContainer = document.getElementById('dots');
+const progressFill = document.getElementById('progressFill');
+const curSlideEl = document.getElementById('curSlide');
+const totSlideEl = document.getElementById('totSlide');
+const sectionLabel = document.getElementById('sectionLabel');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+
+let current = 0;
+const total = slides.length;
+totSlideEl.textContent = total;
+
+// Build dots
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'dot' + (slides[i].classList.contains('slide-section') || slides[i].classList.contains('slide-title') ? ' section-dot' : '');
+  dot.onclick = () => goTo(i);
+  dotsContainer.appendChild(dot);
+});
+
+function goTo(n) {
+  slides[current].classList.remove('active');
+  current = Math.max(0, Math.min(n, total - 1));
+  slides[current].classList.add('active');
+  updateUI();
+}
+
+function navigate(dir) { goTo(current + dir); }
+
+function updateUI() {
+  curSlideEl.textContent = current + 1;
+  progressFill.style.width = ((current + 1) / total * 100) + '%';
+  btnPrev.disabled = current === 0;
+  btnNext.disabled = current === total - 1;
+  btnNext.textContent = current === total - 1
+    ? (document.body.classList.contains('lang-jp') ? '終了' : 'End')
+    : (document.body.classList.contains('lang-jp') ? '次へ →' : 'Next →');
+
+  const sec = slides[current].dataset.section || '';
+  sectionLabel.textContent = sec;
+
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.toggle('active', i === current);
+  });
+}
+
+function toggleLang() {
+  const body = document.body;
+  if (body.classList.contains('lang-jp')) {
+    body.classList.remove('lang-jp');
+    body.classList.add('lang-en');
+  } else {
+    body.classList.remove('lang-en');
+    body.classList.add('lang-jp');
+  }
+  updateUI();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); navigate(1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); navigate(-1); }
+  if (e.key === 'Home') goTo(0);
+  if (e.key === 'End')  goTo(total - 1);
+});
+
+// Touch swipe
+let touchX = 0;
+document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+document.addEventListener('touchend',   e => {
+  const dx = touchX - e.changedTouches[0].clientX;
+  if (Math.abs(dx) > 50) navigate(dx > 0 ? 1 : -1);
+});
+
+updateUI();
+</script>
+</body>
+</html>
