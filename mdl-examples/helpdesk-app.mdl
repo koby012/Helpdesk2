@@ -1426,10 +1426,6 @@ begin
 end;
 /
 
-grant execute on microflow HD.ACT_Comment_Open to HD.AgentRole, HD.ManagerRole;
-grant execute on microflow HD.ACT_Comment_Add  to HD.AgentRole, HD.ManagerRole;
-grant view on page HD.TicketComment_Form       to HD.AgentRole, HD.ManagerRole;
-
 -- Popup: non-persistent entity search form
 create or replace page HD.TicketSearch_Form
 (
@@ -1645,6 +1641,9 @@ grant view on page HD.Ticket_NewEdit       to HD.CustomerRole, HD.AgentRole, HD.
 grant view on page KB.Article_NewEdit      to KB.Contributor, KB.Admin;
 grant view on page HD.EscalationStart_Form    to HD.AgentRole, HD.ManagerRole;
 grant view on page HD.EscalationReview_Form   to HD.ManagerRole;
+grant execute on microflow HD.ACT_Comment_Open to HD.AgentRole, HD.ManagerRole;
+grant execute on microflow HD.ACT_Comment_Add  to HD.AgentRole, HD.ManagerRole;
+grant view on page HD.TicketComment_Form       to HD.AgentRole, HD.ManagerRole;
 grant view on page HD.EscalationWorkflow_Overview to HD.ManagerRole;
 grant view on page KB.Article_Overview     to KB.Reader, KB.Contributor, KB.Admin;
 grant view on page KB.Article_Detail       to KB.Reader, KB.Contributor, KB.Admin;
