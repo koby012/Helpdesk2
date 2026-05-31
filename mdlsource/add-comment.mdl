@@ -1,0 +1,81 @@
+-- コメント追加機能
+-- 1. ACT_Comment_Open  — 新規 TicketComment を作りポップアップを開く
+-- 2. ACT_Comment_Add   — バリデーション → アソシエーション設定 → commit
+-- 3. TicketComment_Form — ポップアップ入力ページ
+-- 4. Ticket_Detail     — [Add Comment] ボタンを追加
+
+-- 1) ポップアップを開くマイクロフロー
+create or modify microflow HD."ACT_Comment_Open" (
+  $Ticket: HD.Ticket
+)
+begin
+  $Comment = create HD.TicketComment (
+    Content    = '',
+    IsInternal = false
+  );
+  show page HD.TicketComment_Form($Ticket = $Ticket, $Comment = $Comment);
+  return;
+end;
+/
+
+grant execute on microflow HD."ACT_Comment_Open" to HD.AgentRole, HD.ManagerRole;
+
+-- 2) 保存マイクロフロー
+create or modify microflow HD."ACT_Comment_Add" (
+  $Ticket:  HD.Ticket,
+  $Comment: HD.TicketComment
+)
+returns Boolean as $OK
+begin
+  if trim($Comment/Content) = '' then
+    validation feedback $Comment/Content message 'コメントを入力してください。';
+    return false;
+  end if;
+  change $Comment (HD.TicketComment_Ticket = $Ticket);
+  commit $Comment;
+  close page;
+  return true;
+end;
+/
+
+grant execute on microflow HD."ACT_Comment_Add" to HD.AgentRole, HD.ManagerRole;
+
+-- 3) ポップアップページ
+create or replace page HD."TicketComment_Form" (
+  title:  'Add Comment',
+  layout: Atlas_Core.PopupLayout,
+  folder: 'Ticket',
+  params: { $Ticket: HD.Ticket, $Comment: HD.TicketComment }
+) {
+  dataview dvComment (datasource: $Comment) {
+    textarea taContent (
+      attribute: Content,
+      label: 'Comment',
+      numberOfLines: 5
+    )
+    checkbox cbIsInternal (
+      attribute: IsInternal,
+      label: 'Internal note (not visible to customer)'
+    )
+    footer footer1 {
+      actionbutton btnSave (
+        caption: 'Save',
+        action: microflow HD.ACT_Comment_Add(Ticket: $Ticket, Comment: $Comment)
+      )
+      actionbutton btnCancel (
+        caption: 'Cancel',
+        action: cancel_changes close_page
+      )
+    }
+  }
+}
+
+-- 4) Ticket_Detail に [Add Comment] ボタンを追加
+alter page HD.Ticket_Detail {
+  insert after txtCommentsHeader {
+    actionbutton btnAddComment (
+      caption: 'Add Comment',
+      action: microflow HD.ACT_Comment_Open(Ticket: $Ticket)
+    )
+  }
+}

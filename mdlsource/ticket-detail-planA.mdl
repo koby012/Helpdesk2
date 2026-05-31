@@ -1,0 +1,101 @@
+-- Ticket_Detail: Plan A — ラベル付きグリッド + コメント一覧 DataSource 修正
+
+create or replace page HD.Ticket_Detail (
+  title: 'Ticket',
+  layout: Atlas_Core.Atlas_Default,
+  folder: 'Ticket',
+  params: { $Ticket: HD.Ticket }
+) {
+  layoutgrid lgMain {
+    row row1 {
+      column col1 (desktopwidth: AutoFill) {
+        dataview dvTicket (datasource: $Ticket) {
+
+          -- Subject
+          dynamictext txtSubject (
+            content: '{1}',
+            rendermode: H2,
+            contentparams: [{1} = $currentObject/Subject]
+          )
+
+          -- Description
+          dynamictext txtDescription (
+            content: '{1}',
+            contentparams: [{1} = $currentObject/Description]
+          )
+
+          -- Status / Priority / SLA の3カラム
+          layoutgrid lgStatusRow {
+            row rowStatusBar {
+              column colStatus (desktopwidth: 4) {
+                dynamictext txtStatusLabel (content: 'Status')
+                dynamictext txtStatus (
+                  content: '{1}',
+                  contentparams: [{1} = toString($currentObject/Status)]
+                )
+              }
+              column colPriority (desktopwidth: 4) {
+                dynamictext txtPriorityLabel (content: 'Priority')
+                dynamictext txtPriority (
+                  content: '{1}',
+                  contentparams: [{1} = toString($currentObject/Priority)]
+                )
+              }
+              column colSLA (desktopwidth: 4) {
+                dynamictext txtSLALabel (content: 'SLA Due')
+                dynamictext txtSLADue (
+                  content: '{1}',
+                  contentparams: [{1} = toString($currentObject/SLADueAt)]
+                )
+              }
+            }
+          }
+
+          footer footer1 {
+            actionbutton btnSubmit (
+              caption: 'Submit',
+              action: microflow HD.ACT_Ticket_Submit(Ticket: $Ticket)
+            )
+            actionbutton btnResolve (
+              caption: 'Resolve',
+              action: microflow HD.ACT_Ticket_Resolve(Ticket: $Ticket)
+            )
+            actionbutton btnReopen (
+              caption: 'Reopen',
+              action: microflow HD.ACT_Ticket_Reopen(Ticket: $Ticket)
+            )
+            actionbutton btnAssignAgent (
+              caption: 'Assign Agent',
+              action: show_page HD.Agent_Select
+            )
+            actionbutton btnEscalate (
+              caption: 'Escalate',
+              action: microflow HD.ACT_Escalation_Open(Ticket: $Ticket)
+            )
+          }
+        }
+      }
+    }
+
+    -- コメント一覧（DataSource を TicketComment_Ticket アソシエーション経由で修正）
+    row row2 {
+      column col1 (desktopwidth: AutoFill) {
+        dynamictext txtCommentsHeader (content: 'Comments', rendermode: H3)
+        datagrid dgComments (
+          datasource: database HD.TicketComment sort by createdDate asc
+        ) {
+          column colContent (
+            attribute: Content,
+            caption: 'Comment'
+          )
+          column colIsInternal (
+            attribute: IsInternal,
+            caption: 'Internal',
+            ColumnWidth: manual,
+            Size: 90
+          )
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,93 @@
+-- Ticket_Detail 全修正: contentparams / datasource / page grant
+
+create or replace page HD.Ticket_Detail (
+  title:  'Ticket',
+  layout: Atlas_Core.Atlas_Default,
+  folder: 'Ticket',
+  params: { $Ticket: HD.Ticket }
+) {
+  layoutgrid lgMain {
+    row row1 {
+      column col1 (desktopwidth: AutoFill) {
+        dataview dvTicket (datasource: $Ticket) {
+          dynamictext txtSubject (
+            content: '{1}',
+            rendermode: H2,
+            contentparams: [{1} = Subject]
+          )
+          dynamictext txtDescription (
+            content: '{1}',
+            contentparams: [{1} = Description]
+          )
+          layoutgrid lgStatusRow {
+            row rowStatusBar {
+              column colStatus (desktopwidth: 4) {
+                dynamictext txtStatusLabel (content: 'Status')
+                dynamictext txtStatus (
+                  content: '{1}',
+                  contentparams: [{1} = toString(Status)]
+                )
+              }
+              column colPriority (desktopwidth: 4) {
+                dynamictext txtPriorityLabel (content: 'Priority')
+                dynamictext txtPriority (
+                  content: '{1}',
+                  contentparams: [{1} = toString(Priority)]
+                )
+              }
+              column colSLA (desktopwidth: 4) {
+                dynamictext txtSLALabel (content: 'SLA Due')
+                dynamictext txtSLADue (
+                  content: '{1}',
+                  contentparams: [{1} = toString(SLADueAt)]
+                )
+              }
+            }
+          }
+          footer ftrActions {
+            actionbutton btnSubmit (
+              caption: 'Submit',
+              action: microflow HD.ACT_Ticket_Submit(Ticket: $Ticket),
+              buttonstyle: primary
+            )
+            actionbutton btnResolve (
+              caption: 'Resolve',
+              action: microflow HD.ACT_Ticket_Resolve(Ticket: $Ticket)
+            )
+            actionbutton btnReopen (
+              caption: 'Reopen',
+              action: microflow HD.ACT_Ticket_Reopen(Ticket: $Ticket)
+            )
+            actionbutton btnAssignAgent (
+              caption: 'Assign Agent',
+              action: show_page HD.Agent_Select(Ticket: $Ticket)
+            )
+            actionbutton btnEscalate (
+              caption: 'Escalate',
+              action: microflow HD.ACT_Escalation_Open(Ticket: $Ticket),
+              buttonstyle: warning
+            )
+          }
+        }
+      }
+    }
+    row rComments {
+      column cComments (desktopwidth: AutoFill) {
+        dynamictext txtCommentsHeader (content: 'Comments', rendermode: H3)
+        actionbutton btnAddComment (
+          caption: 'Add Comment',
+          action: microflow HD.ACT_Comment_Open(Ticket: $Ticket)
+        )
+        datagrid dgComments (
+          datasource: $Ticket/HD.TicketComment_Ticket/HD.TicketComment
+        ) {
+          column colContent_   (attribute: Content,    caption: 'Comment')
+          column colIsInternal (attribute: IsInternal, caption: 'Internal', ColumnWidth: manual, Size: 90)
+        }
+      }
+    }
+  }
+}
+
+-- CE0557 解消: ページ Grant を再付与
+grant view on page HD.Ticket_Detail to HD.CustomerRole, HD.AgentRole, HD.ManagerRole;

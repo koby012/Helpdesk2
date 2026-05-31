@@ -1,0 +1,6 @@
+-- TicketComment に system members 追加（CREATE OR MODIFY で全体再定義）
+create or modify persistent entity HD."TicketComment" (
+  "Content":    String not null,
+  "IsInternal": Boolean default false
+)
+system members (owner, createdDate, changedDate, changedBy);

@@ -1,0 +1,60 @@
+-- Comment パラメータ名が予約語だったため Cmnt にリネームして再作成
+
+-- マイクロフロー再作成（パラメータ名修正）
+create or modify microflow HD."ACT_Comment_Add" (
+  $Ticket: HD.Ticket,
+  $Cmnt:   HD.TicketComment
+)
+returns Boolean as $OK
+begin
+  if trim($Cmnt/Content) = '' then
+    validation feedback $Cmnt/Content message 'コメントを入力してください。';
+    return false;
+  end if;
+  change $Cmnt (HD.TicketComment_Ticket = $Ticket);
+  commit $Cmnt;
+  close page;
+  return true;
+end;
+/
+
+-- ポップアップページ再作成（パラメータ名修正）
+create or replace page HD."TicketComment_Form" (
+  title:  'Add Comment',
+  layout: Atlas_Core.PopupLayout,
+  folder: 'Ticket',
+  params: { $Ticket: HD.Ticket, $Cmnt: HD.TicketComment }
+) {
+  dataview dvComment (datasource: $Cmnt) {
+    textarea taContent (
+      attribute: Content,
+      label: 'Comment',
+      numberOfLines: 5
+    )
+    checkbox cbIsInternal (
+      attribute: IsInternal,
+      label: 'Internal note (not visible to customer)'
+    )
+    footer footer1 {
+      actionbutton btnSave (
+        caption: 'Save',
+        action: microflow HD.ACT_Comment_Add(Ticket: $Ticket, Cmnt: $Cmnt)
+      )
+      actionbutton btnCancel (
+        caption: 'Cancel',
+        action: cancel_changes close_page
+      )
+    }
+  }
+}
+
+-- ACT_Comment_Open も $Cmnt に合わせる
+create or modify microflow HD."ACT_Comment_Open" (
+  $Ticket: HD.Ticket
+)
+begin
+  $Cmnt = create HD.TicketComment (Content = '', IsInternal = false);
+  show page HD.TicketComment_Form($Ticket = $Ticket, $Cmnt = $Cmnt);
+  return;
+end;
+/
