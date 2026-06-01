@@ -391,7 +391,154 @@ ul.list li::before {
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SLIDE 2 — Agenda
+     SLIDE 2 — Prerequisites
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Intro">
+  <h2><span class="jp">前提ソフトウェア</span><span class="en">Prerequisites</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <div class="card accent-left" style="padding:14px 18px;">
+        <div style="font-size:0.78em;font-weight:700;color:var(--accent);margin-bottom:10px;">
+          <span class="jp">必須</span><span class="en">Required</span>
+        </div>
+        <table style="font-size:0.83em;">
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">Mendix Studio Pro</td>
+            <td style="padding:6px 0;">11.6.6 &nbsp;<span style="color:var(--text-muted);font-size:0.85em;">marketplace.mendix.com</span></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">Claude Code</td>
+            <td style="padding:6px 0;"><code>npm install -g @anthropic-ai/claude-code</code></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">Docker Desktop</td>
+            <td style="padding:6px 0;">docker.com &nbsp;<span style="color:var(--text-muted);font-size:0.85em;"><span class="jp">WSL2 バックエンド推奨</span><span class="en">WSL2 backend recommended</span></span></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">Git for Windows</td>
+            <td style="padding:6px 0;">git-scm.com &nbsp;<span style="color:var(--text-muted);font-size:0.85em;"><span class="jp">Git Bash 同梱・WSL 不要</span><span class="en">includes Git Bash — no WSL needed</span></span></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">Node.js</td>
+            <td style="padding:6px 0;">v18+ &nbsp;<span style="color:var(--text-muted);font-size:0.85em;">nodejs.org</span></td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">playwright-cli</td>
+            <td style="padding:6px 0;"><code>npm install -g playwright-cli</code></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card accent-left blue" style="padding:14px 18px;">
+        <div style="font-size:0.78em;font-weight:700;color:var(--accent2);margin-bottom:10px;">
+          <span class="jp">推奨</span><span class="en">Recommended</span>
+        </div>
+        <table style="font-size:0.83em;">
+          <tr>
+            <td style="padding:6px 10px 6px 0;color:var(--accent2);font-weight:600;white-space:nowrap;">VS Code</td>
+            <td style="padding:6px 0;"><span class="jp">MDL Language Server 拡張機能あり</span><span class="en">MDL Language Server extension available</span></td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      <div class="card" style="padding:16px 18px;">
+        <h3 style="font-size:0.9em;margin-bottom:10px;"><span class="jp">バージョン確認コマンド</span><span class="en">Version Check Commands</span></h3>
+        <pre style="font-size:0.79em;">git --version
+node --version
+docker --version
+claude --version</pre>
+      </div>
+
+      <div class="callout" style="font-size:0.82em;">
+        <span class="jp">💡 <code>mxcli.exe</code> はリポジトリに同梱済み。<br>別途インストール不要。</span>
+        <span class="en">💡 <code>mxcli.exe</code> is bundled in the repository.<br>No separate installation needed.</span>
+      </div>
+
+      <div class="callout blue" style="font-size:0.82em;">
+        <span class="jp">⚠️ WSL は不要です。<br>Git for Windows に含まれる Git Bash で動作します。</span>
+        <span class="en">⚠️ WSL is NOT required.<br>Git Bash (bundled with Git for Windows) is sufficient.</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 3 — Setup
+══════════════════════════════════════════════════════════════ -->
+<div class="slide" data-section="Intro">
+  <h2><span class="jp">セットアップ手順</span><span class="en">Setup Steps</span></h2>
+  <div class="cols cols-2" style="gap:20px;">
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">指定パスにフォルダを配置する</span><span class="en">Place the folder at the specified path</span></div>
+          <pre style="margin-top:8px;font-size:0.8em;"><span class="cm"><span class="jp"># 配布フォルダを以下のパスに置く</span><span class="en"># Place the distributed folder at this path</span></span>
+c:\dev\MxCLI\Handson\Helpdesk2</pre>
+          <div style="font-size:0.78em;color:var(--text-muted);margin-top:6px;">
+            <span class="jp">⚠️ このパスに置かないと Claude Code のメモリが読み込まれません</span>
+            <span class="en">⚠️ Memory won't load if placed at a different path</span>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">setup.bat を実行する</span><span class="en">Run setup.bat</span></div>
+          <pre style="margin-top:8px;font-size:0.8em;"><span class="cm"><span class="jp"># エクスプローラーでダブルクリック または</span><span class="en"># Double-click in Explorer or</span></span>
+cd c:\dev\MxCLI\Handson\Helpdesk2
+setup.bat</pre>
+          <div style="font-size:0.78em;color:var(--text-muted);margin-top:6px;">
+            <span class="jp">Claude Code のメモリ（MDL ルール・既知バグ）をコピーします</span>
+            <span class="en">Copies Claude Code memory (MDL rules, known bugs) to the right location</span>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">Claude Code を起動する</span><span class="en">Launch Claude Code</span></div>
+          <pre style="margin-top:8px;font-size:0.8em;">cd c:\dev\MxCLI\Handson\Helpdesk2
+claude</pre>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">Studio Pro でプロジェクトを開く</span><span class="en">Open project in Studio Pro</span></div>
+          <div class="step-desc"><span class="jp">Helpdesk2.mpr をダブルクリック</span><span class="en">Double-click Helpdesk2.mpr</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <h3 style="font-size:0.9em;"><span class="jp">playwright-cli のパス設定</span><span class="en">playwright-cli Path Setting</span></h3>
+        <p style="font-size:0.8em;color:var(--text-muted);margin:8px 0;">
+          <span class="jp">テストスクリプトの先頭 <code>PW=</code> を自分の環境に合わせて変更する</span>
+          <span class="en">Update the <code>PW=</code> line at the top of test scripts to match your environment</span>
+        </p>
+        <pre style="font-size:0.78em;"><span class="cm"><span class="jp"># tests/*.sh の先頭を変更</span><span class="en"># Change in tests/*.sh</span></span>
+PW=<span class="st">"/c/Users/YOUR_NAME/AppData/Roaming/npm/playwright-cli"</span></pre>
+        <div style="font-size:0.78em;color:var(--text-muted);margin-top:8px;">
+          <span class="jp">確認: <code>where playwright-cli</code>（CMD で実行）</span>
+          <span class="en">Find path: <code>where playwright-cli</code> in CMD</span>
+        </div>
+      </div>
+      <div class="callout green" style="font-size:0.82em;">
+        <span class="jp">✅ setup.bat が完了すると Claude Code に MDL の知見が読み込まれます<br>（contentparams の書き方・既知バグ・Playwright パターン）</span>
+        <span class="en">✅ After setup.bat, Claude Code loads MDL knowledge<br>(contentparams rules, known bugs, Playwright patterns)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 4 — Agenda
 ══════════════════════════════════════════════════════════════ -->
 <div class="slide" data-section="Intro">
   <h2><span class="jp">本日のアジェンダ</span><span class="en">Agenda</span></h2>
