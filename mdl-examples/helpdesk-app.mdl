@@ -1308,15 +1308,15 @@ create or replace page HD.Ticket_Detail
             row rowStatusBar {
               column colStatus (desktopwidth: 4) {
                 dynamictext txtStatusLabel (content: 'Status')
-                dynamictext txtStatus (content: '{1}', contentparams: [{1} = toString($currentObject/Status)])
+                dynamictext txtStatus (content: '{1}', contentparams: [{1} = Status])
               }
               column colPriority (desktopwidth: 4) {
                 dynamictext txtPriorityLabel (content: 'Priority')
-                dynamictext txtPriority (content: '{1}', contentparams: [{1} = toString($currentObject/Priority)])
+                dynamictext txtPriority (content: '{1}', contentparams: [{1} = Priority])
               }
               column colSLA (desktopwidth: 4) {
                 dynamictext txtSLALabel (content: 'SLA Due')
-                dynamictext txtSLADue (content: '{1}', contentparams: [{1} = toString($currentObject/SLADueAt)])
+                dynamictext txtSLADue (content: '{1}', contentparams: [{1} = SLADueAt])
               }
             }
           }

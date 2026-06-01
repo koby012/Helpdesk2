@@ -1,0 +1,32 @@
+-- ============================================================
+-- ISSUE: contentparams に $currentObject/ や toString() を
+--        手動で書いてはいけない
+-- ============================================================
+--
+-- 【現象】
+-- DynamicText の contentparams 内で属性を参照するとき、
+-- 手動で $currentObject/ や toString() を書くと壊れる。
+--
+--   NG: contentparams: [{1} = $currentObject/Subject]
+--       → 保存時に <unbound> になる（CE0402）
+--
+--   NG: contentparams: [{1} = toString($currentObject/Status)]
+--       → $currentObject/toString($currentObject/Status) になる（CE0117）
+--
+-- 【正しい書き方】
+-- 属性名だけ書く。MDL が自動的に変換してくれる。
+--
+--   OK: contentparams: [{1} = Subject]
+--       → $currentObject/Subject として保存される（String）
+--
+--   OK: contentparams: [{1} = Status]
+--       → toString($currentObject/Status) として保存される（Enum）
+--
+-- 【ルール】
+--   - String 属性 : 属性名のみ（例: Subject, Description, Content）
+--   - Enum 属性   : 属性名のみ（例: Status, Priority）
+--   - DateTime    : 属性名のみ（例: SLADueAt, CreatedDate）
+--   - $currentObject/ は MDL 内で手動で書かない
+--   - toString() も MDL の contentparams 内では書かない
+--
+-- ============================================================
