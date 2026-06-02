@@ -43,7 +43,37 @@
       "Read(//c/Users/z004jcbp/.claude/projects/c--dev-MxCLI-PayerBilling-PayerBilling5/memory/**)"
     ],
     "deny": [
-      "Bash(rm -rf)"
+      "Bash(rm -rf)",
+      "Bash(./mxcli docker down*)",
+      "Bash(mxcli docker down*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push *)",
+            "command": "cd 'c:/dev/MxCLI/Handson/Helpdesk2/.docker' && docker compose down 2>/dev/null || true",
+            "statusMessage": "Stopping Docker before push..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(./mxcli exec mdl-examples/helpdesk-app.mdl *)",
+            "command": "cd 'c:/dev/MxCLI/Handson/Helpdesk2' && cp -r mprcontents/. .mendix-cache/base_data/mprcontents/ && cp Helpdesk2.mpr .mendix-cache/base_data/Helpdesk2.mpr 2>/dev/null || true",
+            "statusMessage": "Syncing mprcontents to .mendix-cache..."
+          }
+        ]
+      }
     ]
   }
 }
