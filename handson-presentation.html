@@ -1489,9 +1489,18 @@ echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> 
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <div class="step-title"><span class="jp">渡された状態を確認する</span><span class="en">Confirm the starting state</span></div>
-          <pre style="margin-top:6px; font-size:0.8em;">./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW MODULES"</span>
-<span class="cm"><span class="jp"># HD も KB もない状態を確認</span><span class="en"># Confirm: no HD, no KB</span></span></pre>
+          <div class="step-title"><span class="jp">helpdesk-reset.mdl を流す</span><span class="en">Apply helpdesk-reset.mdl</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli exec mdl-examples/helpdesk-reset.mdl -p Helpdesk2.mpr</pre>
+        </div>
+      </div>
+      <div class="step" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px 12px;">
+        <div class="step-num" style="background:var(--amber); color:#000;">✓</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">Studio Pro で確認①（リセット後）</span><span class="en">Check in Studio Pro ① (after reset)</span></div>
+          <p style="font-size:0.82em; color:var(--text-muted); margin-top:4px; line-height:1.6;">
+            <span class="jp">HD・KB モジュールが消えていること / ユーザーロール・デモユーザーが削除されていること</span>
+            <span class="en">HD &amp; KB modules gone / User roles &amp; demo users deleted</span>
+          </p>
         </div>
       </div>
       <div class="step">
@@ -1502,30 +1511,28 @@ echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> 
   -p Helpdesk2.mpr</pre>
         </div>
       </div>
+      <div class="step" style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; padding:10px 12px;">
+        <div class="step-num" style="background:var(--amber); color:#000;">✓</div>
+        <div class="step-body">
+          <div class="step-title"><span class="jp">Studio Pro で確認②（適用後）</span><span class="en">Check in Studio Pro ② (after apply)</span></div>
+          <p style="font-size:0.82em; color:var(--text-muted); margin-top:4px; line-height:1.6;">
+            <span class="jp">HD・KB モジュール作成済み / Ticket_NewEdit・Ticket_Detail の構成を確認 / デモユーザー3名が作成されていること</span>
+            <span class="en">HD &amp; KB created / Check Ticket_NewEdit, Ticket_Detail / 3 demo users created</span>
+          </p>
+        </div>
+      </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-body">
-          <div class="step-title"><span class="jp">何が作られたか確認する</span><span class="en">Verify what was created</span></div>
-          <pre style="margin-top:6px; font-size:0.8em;">./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW MODULES"</span>
-./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW STRUCTURE DEPTH 2 IN HD"</span>
-./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW NAVIGATION HOMES"</span></pre>
+          <div class="step-title"><span class="jp">docker でアプリを起動する</span><span class="en">Start the app with Docker</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">./mxcli docker run -p Helpdesk2.mpr --wait</pre>
         </div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-body">
-          <div class="step-title"><span class="jp">docker reload して動作確認</span><span class="en">Hot reload &amp; check in browser</span></div>
-          <pre style="margin-top:6px; font-size:0.8em;">./mxcli docker reload -p Helpdesk2.mpr
-<span class="cm"><span class="jp"># http://localhost:8080 でログイン</span><span class="en"># Login at http://localhost:8080</span></span></pre>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">5</div>
-        <div class="step-body">
-          <div class="step-title"><span class="jp">OQL でデータ状態を確認</span><span class="en">Confirm DB state with OQL</span></div>
-          <pre style="margin-top:6px; font-size:0.8em;">./mxcli oql -p Helpdesk2.mpr \
-  <span class="st">"SELECT count(ID) FROM HD.Ticket"</span>
-<span class="cm"># → 0  "MDL <span class="jp">は構造を作る。データは作らない</span><span class="en">creates structure, not data</span>"</span></pre>
+          <div class="step-title"><span class="jp">E2E テストを実行する</span><span class="en">Run E2E test</span></div>
+          <pre style="margin-top:6px; font-size:0.8em;">bash tests/e2e-workflow-test.sh</pre>
         </div>
       </div>
     </div>
