@@ -636,14 +636,14 @@ PW=<span class="st">"/c/Users/YOUR_NAME/AppData/Roaming/npm/playwright-cli"</spa
      SLIDE 5 — .mpr の正体
 ══════════════════════════════════════════════════════════════ -->
 <div class="slide" data-section="Part 1 — 大枠">
-  <h2><span class="jp">.mpr ファイルの正体と mxcli の役割</span><span class="en">What is .mpr — and what does mxcli do?</span></h2>
+  <h2><span class="jp">.mpr ファイルとは何か — mxcli の役割</span><span class="en">What is .mpr — and what does mxcli do?</span></h2>
   <div class="cols cols-2" style="gap:20px;">
     <div>
       <div class="card accent-left">
-        <h3><span class="jp">.mpr = SQLite データベース</span><span class="en">.mpr = SQLite Database</span></h3>
+        <h3><span class="jp">.mpr = Mendix プロジェクトファイル</span><span class="en">.mpr = Mendix Project File</span></h3>
         <p style="font-size:0.85em; color:var(--text-muted); line-height:1.7;">
-          <span class="jp">Mendix のプロジェクトファイルは中身が SQLite DB。<br>エンティティ・マイクロフロー・ページ・セキュリティ設定がすべてテーブルに格納されている。<br>Studio Pro はその GUI エディタに過ぎない。</span>
-          <span class="en">A Mendix project file is a SQLite database.<br>Entities, microflows, pages, and security rules are all stored as table rows.<br>Studio Pro is just a GUI editor on top of it.</span>
+          <span class="jp">Mendix 独自形式のプロジェクトファイル。<br>エンティティ・マイクロフロー・ページ・セキュリティ設定がすべてこの1ファイルに格納されている。<br>Studio Pro はその GUI エディタ。mxcli はコードから直接操作するツール。</span>
+          <span class="en">Mendix's proprietary project file format.<br>Entities, microflows, pages, and security rules are all stored in this single file.<br>Studio Pro is the GUI editor. mxcli manipulates it directly from code.</span>
         </p>
       </div>
       <div class="card accent-left blue" style="margin-top:14px;">
@@ -703,12 +703,26 @@ PW=<span class="st">"/c/Users/YOUR_NAME/AppData/Roaming/npm/playwright-cli"</spa
       <tr><td><span class="jp">GUI で視覚的に確認・デバッグ</span><span class="en">Visual debugging / inspection</span></td><td class="check">◎</td><td class="cross">△</td></tr>
       <tr><td><span class="jp">既存ロジックの素早い読み取り</span><span class="en">Quickly read existing logic</span></td><td class="cross">△ <span style="font-size:0.8em;color:#64748b;"><span class="jp">画面遷移が多い</span><span class="en">many clicks</span></span></td><td class="check">◎ <span style="font-size:0.8em;color:#64748b;">DESCRIBE 1発</span></td></tr>
       <tr><td><span class="jp">一括変更・スクリプト化</span><span class="en">Bulk changes / scripted edits</span></td><td class="cross">×</td><td class="check">◎</td></tr>
-      <tr><td><span class="jp">AI エージェントとの連携</span><span class="en">AI agent integration</span></td><td class="cross">×</td><td class="check">◎</td></tr>
+      <tr>
+        <td><span class="jp">AI エージェントとの連携</span><span class="en">AI agent integration</span></td>
+        <td><span class="cross" style="font-size:0.85em;">× <span style="color:#64748b;font-weight:400;"><span class="jp">現行版</span><span class="en">current</span></span></span><br><span class="check" style="font-size:0.85em;">◎ <span style="color:#64748b;font-weight:400;">11.11.0+</span></span></td>
+        <td class="check">◎</td>
+      </tr>
       <tr><td><span class="jp">Docker ビルド → 起動</span><span class="en">Docker build &amp; run</span></td><td class="cross">×</td><td class="check">◎</td></tr>
       <tr><td><span class="jp">UI テスト・DB 検証</span><span class="en">UI tests &amp; DB assertion</span></td><td class="cross">×</td><td class="check">◎</td></tr>
     </tbody>
   </table>
-  <div class="callout" style="margin-top:20px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red);">
+
+  <div class="callout" style="margin-top:16px; background:rgba(99,102,241,0.1); border-color:rgba(99,102,241,0.4); color:var(--accent);">
+    <span class="jp">🚀 <strong>Mendix 11.11.0以降 — Studio Pro が MCP Server として動作</strong><br>
+    Claude Code ↔ Studio Pro が直接連携。会話でページ編集・エンティティ操作が可能になる。<br>
+    mxcli（MDL）+ Studio Pro MCP の組み合わせで、AI支援開発がさらに強力になる。</span>
+    <span class="en">🚀 <strong>Mendix 11.11.0+ — Studio Pro works as an MCP Server</strong><br>
+    Claude Code connects directly to Studio Pro. Edit pages &amp; entities through conversation.<br>
+    Combining mxcli (MDL) + Studio Pro MCP makes AI-assisted development even more powerful.</span>
+  </div>
+
+  <div class="callout" style="margin-top:10px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red);">
     <span class="jp">⚠️ Studio Pro でプロジェクトを開いている間は mxcli で編集しないこと。<br>Studio Pro はメモリキャッシュを持ち、外部からの変更を認識できない。<br>最悪 .mpr が破損する。<br><strong>手順: Studio Pro でプロジェクトを閉じる → mxcli 実行 → Studio Pro で再度開く</strong></span>
     <span class="en">⚠️ Do NOT edit with mxcli while the project is open in Studio Pro.<br>Studio Pro holds in-memory caches that cannot be updated externally — concurrent edits can corrupt the .mpr file.<br><strong>Workflow: Close project in Studio Pro → run mxcli → re-open in Studio Pro</strong></span>
   </div>
