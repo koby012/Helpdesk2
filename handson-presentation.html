@@ -604,7 +604,7 @@ PW=<span class="st">"/c/Users/YOUR_NAME/AppData/Roaming/npm/playwright-cli"</spa
       <div class="flow-content">
         <div class="flow-label"><span class="jp">開発 — MDL スクリプトで機能を実装</span><span class="en">Build — Implement features with MDL scripts</span></div>
         <div class="flow-desc"><span class="jp">DESCRIBE → 書く → check → exec</span><span class="en">DESCRIBE → Write → check → exec</span></div>
-        <div class="flow-tool">./mxcli check script.mdl --references &nbsp;&nbsp; ./mxcli exec script.mdl</div>
+        <div class="flow-tool">./mxcli check script.mdl -p Helpdesk2.mpr --references &nbsp;&nbsp; ./mxcli exec script.mdl -p Helpdesk2.mpr</div>
       </div>
     </div>
     <div class="flow-arrow">↓</div>
@@ -723,8 +723,8 @@ PW=<span class="st">"/c/Users/YOUR_NAME/AppData/Roaming/npm/playwright-cli"</spa
   </div>
 
   <div class="callout" style="margin-top:10px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red);">
-    <span class="jp">⚠️ Studio Pro でプロジェクトを開いている間は mxcli で編集しないこと。<br>Studio Pro はメモリキャッシュを持ち、外部からの変更を認識できない。<br>最悪 .mpr が破損する。<br><strong>手順: Studio Pro でプロジェクトを閉じる → mxcli 実行 → Studio Pro で再度開く</strong></span>
-    <span class="en">⚠️ Do NOT edit with mxcli while the project is open in Studio Pro.<br>Studio Pro holds in-memory caches that cannot be updated externally — concurrent edits can corrupt the .mpr file.<br><strong>Workflow: Close project in Studio Pro → run mxcli → re-open in Studio Pro</strong></span>
+    <span class="jp">⚠️ Studio Pro でプロジェクトを開いている間は mxcli で編集しないこと。<br>Studio Pro はメモリキャッシュを持ち、外部からの変更を認識できない。<br>最悪 .mpr が破損する。<br><strong>手順: Studio Pro でプロジェクトを閉じる → mxcli 実行 → Studio Pro で再度開く（Reload ダイアログ → Yes → OK の2回クリック）</strong></span>
+    <span class="en">⚠️ Do NOT edit with mxcli while the project is open in Studio Pro.<br>Studio Pro holds in-memory caches that cannot be updated externally — concurrent edits can corrupt the .mpr file.<br><strong>Workflow: Close project in Studio Pro → run mxcli → re-open in Studio Pro (Reload dialog → Yes → OK, two clicks)</strong></span>
   </div>
 </div>
 
@@ -1079,24 +1079,24 @@ grant HD.ManagerRole on HD.Ticket (create, delete, read *, write *);</pre>
     <div>
       <h3>SHOW CALLERS / CALLEES / CONTEXT</h3>
       <pre style="font-size:0.79em;"><span class="cm"><span class="jp"># 誰がこのMFを呼ぶか</span><span class="en"># Who calls this MF?</span></span>
-./mxcli -c <span class="st">"SHOW CALLERS OF HD.ACT_Ticket_Validate"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW CALLERS OF HD.ACT_Ticket_Validate"</span>
 
 <span class="cm"><span class="jp"># このMFは何を呼ぶか</span><span class="en"># What does this MF call?</span></span>
-./mxcli -c <span class="st">"SHOW CALLEES OF HD.ACT_Ticket_Submit"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW CALLEES OF HD.ACT_Ticket_Submit"</span>
 
 <span class="cm"><span class="jp"># 上記3つを一括で出力</span><span class="en"># All at once</span></span>
-./mxcli -c <span class="st">"SHOW CONTEXT OF HD.ACT_Ticket_Submit"</span></pre>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW CONTEXT OF HD.ACT_Ticket_Submit"</span></pre>
       <div class="card" style="margin-top:12px;">
         <h3 style="font-size:0.9em;"><span class="jp">その他の探索コマンド</span><span class="en">More exploration commands</span></h3>
         <pre style="font-size:0.77em;"><span class="cm"><span class="jp"># セキュリティ全体像</span><span class="en"># Security overview</span></span>
-./mxcli -c <span class="st">"SHOW SECURITY MATRIX IN HD"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW SECURITY MATRIX IN HD"</span>
 
 <span class="cm"><span class="jp"># ロール別ホームページ</span><span class="en"># Role-based home pages</span></span>
-./mxcli -c <span class="st">"SHOW NAVIGATION HOMES"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SHOW NAVIGATION HOMES"</span>
 
 <span class="cm"><span class="jp"># Catalog SQL クエリ</span><span class="en"># Catalog SQL query</span></span>
-./mxcli -c <span class="st">"REFRESH CATALOG"</span>
-./mxcli -c <span class="st">"SELECT Name, ModuleName FROM CATALOG.ENTITIES WHERE ModuleName='HD'"</span></pre>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"REFRESH CATALOG"</span>
+./mxcli -p Helpdesk2.mpr -c <span class="st">"SELECT Name, ModuleName FROM CATALOG.ENTITIES WHERE ModuleName='HD'"</span></pre>
       </div>
     </div>
   </div>
@@ -1138,8 +1138,8 @@ grant HD.ManagerRole on HD.Ticket (create, delete, read *, write *);</pre>
           <div class="step-num">3</div>
           <div class="step-body">
             <div class="step-title"><span class="jp">check → exec で安全に適用</span><span class="en">check → exec to apply safely</span></div>
-            <pre style="margin-top:6px; font-size:0.8em;">./mxcli check my-change.mdl -p Helpdesk2.mpr <span class="kw">--references</span>
-./mxcli exec  my-change.mdl -p Helpdesk2.mpr</pre>
+            <pre style="margin-top:6px; font-size:0.8em;">./mxcli check mdlsource/my-change.mdl -p Helpdesk2.mpr <span class="kw">--references</span>
+./mxcli exec  mdlsource/my-change.mdl -p Helpdesk2.mpr</pre>
           </div>
         </div>
       </div>
@@ -1195,7 +1195,7 @@ grant HD.ManagerRole on HD.Ticket (create, delete, read *, write *);</pre>
   <div class="cols cols-40-60" style="gap:20px; align-items:start;">
     <div>
       <pre style="font-size:0.85em;">./mxcli docker run \
-  -p Helpdesk2.mpr</pre>
+  -p Helpdesk2.mpr --wait</pre>
       <div class="steps" style="margin-top:14px;">
         <div class="step">
           <div class="step-num">1</div>
@@ -1207,7 +1207,7 @@ grant HD.ManagerRole on HD.Ticket (create, delete, read *, write *);</pre>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          <div class="step-body"><span class="jp">docker-compose.yml を自動生成・起動</span><span class="en">Generate &amp; launch docker-compose.yml</span></div>
+          <div class="step-body"><span class="jp">.docker/docker-compose.yml を使ってコンテナを起動</span><span class="en">Start containers using .docker/docker-compose.yml</span></div>
         </div>
         <div class="step">
           <div class="step-num">4</div>
@@ -1216,7 +1216,7 @@ grant HD.ManagerRole on HD.Ticket (create, delete, read *, write *);</pre>
       </div>
     </div>
     <div>
-      <pre style="font-size:0.79em;"><span class="cm"># <span class="jp">自動生成される</span><span class="en">Auto-generated</span> docker-compose.yml</span>
+      <pre style="font-size:0.79em;"><span class="cm"># <span class="jp">.docker/docker-compose.yml（リポジトリに含まれる）</span><span class="en">.docker/docker-compose.yml (included in repository)</span></span>
 services:
   mendix:
     image: eclipse-temurin:21-jre
@@ -1242,7 +1242,7 @@ services:
 <span class="cm"><span class="jp"># 停止（docker down はバグがあるため compose で代替）</span><span class="en"># Stop (mxcli docker down has a bug — use compose directly)</span></span>
 cd .docker && docker compose down</pre>
       <div class="callout" style="margin-top:10px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red); font-size:0.8em;">
-        <strong>⚠️ <span class="jp">Pluggable Widget（Gallery / DataGrid2 / ComboBox）を MDL で追加・変更した場合</span><span class="en">When adding/changing Pluggable Widgets (Gallery / DataGrid2 / ComboBox) via MDL</span></strong><br>
+        <strong>⚠️ <span class="jp">Pluggable Widget（Gallery / DataGrid2）を MDL で追加・変更した場合</span><span class="en">When adding/changing Pluggable Widgets (Gallery / DataGrid2) via MDL</span></strong><br>
         <span class="jp">Studio Pro でプロジェクトを開き直し、<br><code>App → Tools → Update All Widgets</code> を実行してから docker reload すること。<br>これをしないと CE0463 が発生してアプリが正常に動作しない。</span>
         <span class="en">Re-open the project in Studio Pro and run<br><code>App → Tools → Update All Widgets</code> before docker reload.<br>Skipping this causes CE0463 — the app will not work correctly.</span>
       </div>
@@ -1498,8 +1498,16 @@ echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> 
         <div class="step-body">
           <div class="step-title"><span class="jp">Studio Pro で確認①（リセット後）</span><span class="en">Check in Studio Pro ① (after reset)</span></div>
           <p style="font-size:0.82em; color:var(--text-muted); margin-top:4px; line-height:1.6;">
+            <span class="jp">Studio Pro でプロジェクトを開く → <strong>Reload ダイアログ → Yes → OK</strong> の順にクリック</span>
+            <span class="en">Open project in Studio Pro → click <strong>Reload dialog → Yes → OK</strong></span>
+          </p>
+          <p style="font-size:0.82em; color:var(--text-muted); margin-top:2px; line-height:1.6;">
             <span class="jp">HD・KB モジュールが消えていること / ユーザーロール・デモユーザーが削除されていること</span>
             <span class="en">HD &amp; KB modules gone / User roles &amp; demo users deleted</span>
+          </p>
+          <p style="font-size:0.82em; color:var(--red); margin-top:6px; line-height:1.6;">
+            <span class="jp">⚠️ 確認後、Studio Pro でプロジェクトを<strong>閉じてから</strong> Step 2 を実行すること</span>
+            <span class="en">⚠️ After checking, <strong>close</strong> the project in Studio Pro before running Step 2</span>
           </p>
         </div>
       </div>
@@ -1516,6 +1524,10 @@ echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> 
         <div class="step-body">
           <div class="step-title"><span class="jp">Studio Pro で確認②（適用後）</span><span class="en">Check in Studio Pro ② (after apply)</span></div>
           <p style="font-size:0.82em; color:var(--text-muted); margin-top:4px; line-height:1.6;">
+            <span class="jp">Studio Pro でプロジェクトを開く → <strong>Reload ダイアログ → Yes → OK</strong> の順にクリック</span>
+            <span class="en">Open project in Studio Pro → click <strong>Reload dialog → Yes → OK</strong></span>
+          </p>
+          <p style="font-size:0.82em; color:var(--text-muted); margin-top:2px; line-height:1.6;">
             <span class="jp">HD・KB モジュール作成済み / Ticket_NewEdit・Ticket_Detail の構成を確認 / デモユーザー3名が作成されていること</span>
             <span class="en">HD &amp; KB created / Check Ticket_NewEdit, Ticket_Detail / 3 demo users created</span>
           </p>
@@ -1550,8 +1562,8 @@ echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> 
         </table>
       </div>
       <div class="callout green" style="margin-top:12px; font-size:0.83em;">
-        <span class="jp">✅ 1661行の MDL が数十秒で完全なアプリを構築する</span>
-        <span class="en">✅ 1,661 lines of MDL build a complete app in seconds</span>
+        <span class="jp">✅ 1,765行の MDL が数十秒で完全なアプリを構築する</span>
+        <span class="en">✅ 1,765 lines of MDL build a complete app in seconds</span>
       </div>
     </div>
   </div>
@@ -1616,8 +1628,8 @@ echo <span class="st">"$RESULT"</span> | grep -q <span class="st">"Open"</span> 
     )
   }
 }</pre>
-      <pre style="margin-top:8px; font-size:0.8em;">./mxcli check ex-category.mdl -p Helpdesk2.mpr <span class="kw">--references</span>
-./mxcli exec  ex-category.mdl -p Helpdesk2.mpr</pre>
+      <pre style="margin-top:8px; font-size:0.8em;">./mxcli check mdlsource/ex-category.mdl -p Helpdesk2.mpr <span class="kw">--references</span>
+./mxcli exec  mdlsource/ex-category.mdl -p Helpdesk2.mpr</pre>
       <div class="callout" style="margin-top:8px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.4); color:var(--red); font-size:0.79em;">
         <strong>⚠️ exec <span class="jp">後は必ずこの手順で</span><span class="en">After exec — always follow these steps</span></strong><br>
         <span class="jp">① Studio Pro でプロジェクトを開き直す（Reload ダイアログが出る）<br>② <code>App → Tools → Update All Widgets</code> を実行<br>③ Studio Pro でプロジェクトを閉じる<br>④ <code>./mxcli docker reload -p Helpdesk2.mpr</code></span>

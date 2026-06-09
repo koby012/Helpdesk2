@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-PW="/c/Users/z004jcbp/AppData/Roaming/npm/playwright-cli"
+PW="${PW:-/c/Users/$USERNAME/AppData/Roaming/npm/playwright-cli}"
 
 echo "Opening browser..."
 $PW open http://localhost:8080
@@ -53,7 +53,7 @@ $PW click ".mx-name-btnSave"
 $PW snapshot
 
 echo "Verifying data was saved via OQL..."
-RESULT=$(cd "c:/dev/MxCLI/Handson/Helpdesk2" && ./mxcli oql -p Helpdesk2.mpr --json \
+RESULT=$(./mxcli oql -p Helpdesk2.mpr --json \
   "SELECT Subject, Status, Priority FROM HD.Ticket WHERE Subject = 'Test Ticket from Playwright' AND Status = 'Open'")
 echo "OQL result: $RESULT"
 echo "$RESULT" | grep -q "Test Ticket from Playwright" || (echo "FAIL: Ticket not found in database" && exit 1)

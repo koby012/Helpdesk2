@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-PW="/c/Users/z004jcbp/AppData/Roaming/npm/playwright-cli"
+PW="${PW:-/c/Users/$USERNAME/AppData/Roaming/npm/playwright-cli}"
 SUBJECT="E2E Test Ticket - Escalation"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 REPORT_DIR="tests/reports/${TIMESTAMP}"
@@ -92,7 +92,7 @@ echo "=== Step 2: Agent processes ticket ==="
 
 $PW open http://localhost:8080
 echo "Starting agent video recording..."
-$PW video-start "${REPORT_DIR}/video_customer.webm" >/dev/null 2>&1 || true
+$PW video-start "${REPORT_DIR}/video_agent.webm" >/dev/null 2>&1 || true
 $PW fill "#usernameInput" "demo_agent@helpdesk.test"
 $PW fill "#passwordInput" "Dem0Agent#2026"
 $PW click "#loginButton"
